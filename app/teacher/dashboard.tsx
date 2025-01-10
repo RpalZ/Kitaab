@@ -10,7 +10,9 @@ export default function TeacherDashboard() {
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scrollView}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollViewContent}
+      >
         <View style={styles.header}>
           <Text style={styles.welcomeText}>Welcome, Teacher!</Text>
         </View>
