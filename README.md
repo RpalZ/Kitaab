@@ -1,50 +1,95 @@
-# Welcome to your Expo app 👋
+# Kitaab - Educational Platform
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A React Native mobile application built with Expo, designed to connect teachers and students in an educational environment.
 
-## Get started
+## Features
 
-1. Install dependencies
+- Dark mode professional UI
+- Separate interfaces for teachers and students
+- Dashboard with statistics and quick actions
+- Class management system
+- Resource sharing capabilities
 
+## Prerequisites
+
+Before you begin, ensure you have installed:
+- [Node.js](https://nodejs.org/) (v16 or newer)
+- [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
+- [Expo CLI](https://docs.expo.dev/get-started/installation/)
+- [Expo Go](https://expo.dev/client) app on your mobile device (optional)
+
+## Installation
+
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd kitaab
+   ```
+
+2. Install dependencies:
    ```bash
    npm install
+   # or
+   yarn install
    ```
 
-2. Start the app
+## Running the App
 
+1. Start the development server:
    ```bash
-    npx expo start
+   npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+2. You can run the app in multiple ways:
+   - Scan the QR code with Expo Go (Android) or Camera app (iOS)
+   - Press 'i' for iOS simulator
+   - Press 'a' for Android emulator
+   - Press 'w' for web browser
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Testing the App
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+1. Test Teacher Flow:
+   - Launch the app
+   - Click "I'm a Teacher"
+   - Login with any email/password
+   - Explore the teacher dashboard
 
-## Get a fresh project
+2. Test Student Flow:
+   - Launch the app
+   - Click "I'm a Student"
+   - Login with any student ID/password
+   - Explore the student dashboard
 
-When you're ready, run:
+## Project Structure
 
-```bash
-npm run reset-project
+```
+app/
+├── components/         # Reusable components
+├── styles/            # Styling and theme files
+│   ├── components/    # Component-specific styles
+│   └── theme.ts       # Global theme configuration
+├── types/             # TypeScript type definitions
+├── student/           # Student-specific screens
+├── teacher/           # Teacher-specific screens
+└── index.tsx          # Entry point
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Contributing
 
-## Learn more
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-To learn more about developing your project with Expo, look at the following resources:
+## Learn More
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+To learn more about the technologies used in this project:
 
-## Join the community
+- [Expo Documentation](https://docs.expo.dev/)
+- [React Native Documentation](https://reactnative.dev/)
+- [Expo Router Documentation](https://docs.expo.dev/router/introduction/)
 
-Join our community of developers creating universal apps.
+## License
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+This project is licensed under the MIT License - see the LICENSE file for details
