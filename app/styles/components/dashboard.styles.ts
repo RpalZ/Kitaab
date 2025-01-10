@@ -1,10 +1,14 @@
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import { COLORS, FONTS, SPACING } from '../theme';
 
 export const dashboardStyles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.tertiary,
+  },
+  scrollView: {
+    flex: 1,
+    paddingBottom: Platform.OS === 'ios' ? 90 : 60, // Increased padding for iOS
   },
   header: {
     padding: SPACING.md,
@@ -43,11 +47,11 @@ export const dashboardStyles = StyleSheet.create({
   statNumber: {
     fontSize: FONTS.sizes.lg,
     fontWeight: FONTS.weights.bold,
-    color: COLORS.secondary,
+    color: COLORS.text.light,
   },
   statLabel: {
     fontSize: FONTS.sizes.xs,
-    color: COLORS.text.secondary,
+    color: COLORS.text.light,
     marginTop: 4,
   },
   section: {

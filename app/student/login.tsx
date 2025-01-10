@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { authStyles as styles } from '../styles/components/auth.styles';
+import { COLORS } from '../styles/theme';
 
 export default function StudentLogin() {
   const router = useRouter();
@@ -13,6 +14,7 @@ export default function StudentLogin() {
         <TextInput
           style={styles.input}
           placeholder="Student ID"
+          placeholderTextColor={COLORS.text.secondary}
           keyboardType="default"
           autoCapitalize="none"
         />
@@ -20,6 +22,7 @@ export default function StudentLogin() {
         <TextInput
           style={styles.input}
           placeholder="Password"
+          placeholderTextColor={COLORS.text.secondary}
           secureTextEntry
         />
         

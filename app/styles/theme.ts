@@ -2,32 +2,32 @@ export default {}
 
 export const COLORS = {
   // Main colors
-  primary: '#2A4365',    // Deep blue
-  secondary: '#4299E1',  // Bright blue
-  tertiary: '#EBF8FF',   // Light blue background
-  accent: '#ED8936',     // Orange accent for important actions
+  primary: '#1A1A1A',    // Almost black
+  secondary: '#2D2D2D',  // Dark gray
+  tertiary: '#121212',   // Dark background
+  accent: '#007AFF',     // Professional blue for important actions
   
   // Base colors
   white: '#FFFFFF',
-  background: '#F7FAFC',
+  background: '#121212',
   
   // Text colors
   text: {
-    primary: '#1A365D',    // Dark blue for main text
-    secondary: '#4A5568',  // Gray for secondary text
+    primary: '#FFFFFF',    // White for main text
+    secondary: '#A0A0A0',  // Light gray for secondary text
     light: '#FFFFFF',      // White text
   },
   
   // UI elements
-  border: '#E2E8F0',
-  success: '#48BB78',    // Green for success states
-  error: '#F56565',      // Red for error states
-  warning: '#ECC94B',    // Yellow for warnings
+  border: '#333333',
+  success: '#00C853',    // Professional green
+  error: '#FF3B30',      // Professional red
+  warning: '#FF9500',    // Professional orange
   
   // Card backgrounds
   card: {
-    primary: '#FFFFFF',
-    secondary: '#F8FAFC',
+    primary: '#1F1F1F',    // Slightly lighter than background
+    secondary: '#2D2D2D',  // Even lighter for contrast
   },
 };
 

@@ -9,7 +9,7 @@ export default function Home() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>EduConnect</Text>
+        <Text style={styles.title}>Kitaab</Text>
         <Text style={styles.subtitle}>Choose your role to get started</Text>
       </View>
 

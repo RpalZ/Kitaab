@@ -10,7 +10,7 @@ export const authStyles = StyleSheet.create({
   title: {
     fontSize: FONTS.sizes.xl,
     fontWeight: FONTS.weights.bold,
-    color: COLORS.primary,
+    color: COLORS.text.light,
     marginTop: SPACING.lg,
     marginBottom: SPACING.lg,
     textAlign: 'center',
@@ -31,6 +31,7 @@ export const authStyles = StyleSheet.create({
   },
   input: {
     borderWidth: 1.5,
+ 
     borderColor: COLORS.border,
     padding: SPACING.sm,
     borderRadius: 10,
