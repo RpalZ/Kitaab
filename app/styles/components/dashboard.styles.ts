@@ -1,14 +1,19 @@
 import { Platform, StyleSheet } from 'react-native';
 import { COLORS, FONTS, SPACING } from '../theme';
 
+const TAB_HEIGHT = Platform.OS === 'ios' ? 90 : 60;
+
 export const dashboardStyles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.tertiary,
+    position: 'relative',
+    zIndex: 2,
+    paddingBottom: TAB_HEIGHT,
   },
-  scrollView: {
-    flex: 1,
-    paddingBottom: Platform.OS === 'ios' ? 90 : 60, // Increased padding for iOS
+  scrollViewContent: {
+    flexGrow: 1,
+    paddingBottom: SPACING.xl,
   },
   header: {
     padding: SPACING.md,
