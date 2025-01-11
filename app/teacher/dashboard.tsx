@@ -1,12 +1,12 @@
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import { TeacherTabs } from '../components/TeacherTabs';
-import { dashboardStyles as styles } from '../styles/components/dashboard.styles';
+import { useRouter } from "expo-router";
+import { useState } from "react";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { TeacherTabs } from "../components/TeacherTabs";
+import { dashboardStyles as styles } from "../styles/components/dashboard.styles";
 
 export default function TeacherDashboard() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState("dashboard");
 
   return (
     <View style={styles.container}>
@@ -47,18 +47,17 @@ export default function TeacherDashboard() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Your Classes</Text>
-          {['Mathematics 101', 'Physics Basic', 'Chemistry Lab'].map((className, index) => (
-            <TouchableOpacity key={index} style={styles.card}>
-              <Text style={styles.className}>{className}</Text>
-              <Text style={styles.classInfo}>15 students • 4 resources</Text>
-            </TouchableOpacity>
-          ))}
+          {["Mathematics 101", "Physics Basic", "Chemistry Lab"].map(
+            (className, index) => (
+              <TouchableOpacity key={index} style={styles.card}>
+                <Text style={styles.className}>{className}</Text>
+                <Text style={styles.classInfo}>15 students • 4 resources</Text>
+              </TouchableOpacity>
+            )
+          )}
         </View>
       </ScrollView>
-      <TeacherTabs 
-        activeTab={activeTab}
-        onTabPress={setActiveTab}
-      />
+      <TeacherTabs activeTab={activeTab} onTabPress={setActiveTab} />
     </View>
   );
-} 
+}
