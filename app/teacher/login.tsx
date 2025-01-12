@@ -16,6 +16,7 @@ import {
 } from "react-native";
 import { authStyles as styles } from "../styles/components/auth.styles";
 import { COLORS } from "../styles/theme";
+import { secureStorage } from '../utils/secureStorage';
 
 const Stack = createNativeStackNavigator();
 
@@ -39,8 +40,11 @@ export default function TeacherLogin() {
     setLoading(true);
     try {
       const response = await signInWithEmailAndPassword(auth, email, password);
+      const token = await response.user.getIdToken();
+      await secureStorage.setItem('userToken', token);
+      
       console.log(response);
-      alert("Succesful signin");
+      alert("Successful signin");
       router.push("/teacher/dashboard");
     } catch (error:any) {
       console.log(error);
