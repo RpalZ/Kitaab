@@ -1,28 +1,52 @@
-import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
-import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
-import { useState } from "react";
-import { LogBox } from "react-native";
-import { COLORS } from "./styles/theme";
-import {
-  createStaticNavigation,
-  NavigationContainer,
-} from "@react-navigation/native";
+import { FIREBASE_AUTH } from "@/FirebaseConfig";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import TeacherDashboard from "./teacher/dashboard";
-import TeacherLogin from "./teacher/login";
-import StudentLogin from "./student/login";
+import { useRouter } from "expo-router";
+import { onAuthStateChanged } from "firebase/auth";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, LogBox } from "react-native";
 import Home from "./index";
 import StudentDashboard from "./student/dashboard";
-import { onAuthStateChanged } from "firebase/auth";
-import { FIREBASE_AUTH } from "@/FirebaseConfig";
+import StudentLogin from "./student/login";
+import { COLORS } from "./styles/theme";
+import TeacherDashboard from "./teacher/dashboard";
+import TeacherLogin from "./teacher/login";
+import { secureStorage } from "./utils/secureStorage";
 
 // Ignore specific warnings
 LogBox.ignoreLogs([
   "Warning: ...", // Add specific warning messages here
   "Deprecated: ...",
 ]);
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = await secureStorage.getItem('userToken');
+      if (!token) {
+        router.replace('/');
+        return;
+      }
+      // Verify token with Firebase
+      return onAuthStateChanged(FIREBASE_AUTH, (user) => {
+        setUser(user);
+        setLoading(false);
+        if (!user) {
+          secureStorage.removeItem('userToken');
+          router.replace('/');
+        }
+      });
+    };
+
+    checkAuth();
+  }, []);
+
+  if (loading) return <ActivityIndicator />;
+  return user ? children : null;
+}
 
 export default function Layout() {
 
