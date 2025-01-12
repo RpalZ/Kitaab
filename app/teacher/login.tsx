@@ -1,24 +1,21 @@
-import { useRouter } from "expo-router";
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import { authStyles as styles } from "../styles/components/auth.styles";
-import { COLORS } from "../styles/theme";
-import { useState, useEffect } from "react";
 import { FIREBASE_AUTH } from "@/FirebaseConfig";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { useRouter } from "expo-router";
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
   signInWithEmailAndPassword,
 } from "firebase/auth";
-import { NavigationProp } from "@react-navigation/native";
-import { NavigationContainer } from "@react-navigation/native";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
+} from "react-native";
+import { authStyles as styles } from "../styles/components/auth.styles";
+import { COLORS } from "../styles/theme";
 
 const Stack = createNativeStackNavigator();
 
@@ -45,7 +42,7 @@ export default function TeacherLogin() {
       console.log(response);
       alert("Succesful signin");
       router.push("/teacher/dashboard");
-    } catch (error) {
+    } catch (error:any) {
       console.log(error);
       alert(`Sign in Failed: ${error.message}`);
     } finally {
@@ -63,7 +60,7 @@ export default function TeacherLogin() {
       );
       console.log(response);
       alert("check email");
-    } catch (error) {
+    } catch (error:any) {
       console.log(error);
       alert(`Sign in Failed: ${error.message}`);
     } finally {
