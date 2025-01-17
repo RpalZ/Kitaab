@@ -9,7 +9,7 @@ const tabs = [
   { key: 'profile', label: 'Profile' },
 ];
 
-export function TeacherTabs({ activeTab, onTabPress }: TabProps) {
+export default function TeacherTabs({ activeTab, onTabPress }: TabProps) {
   return (
     <View style={styles.tabContainer}>
       {tabs.map((tab) => (
