@@ -45,7 +45,7 @@ export default function TeacherLogin() {
       console.log(response);
       alert("Succesful signin");
       router.push("/teacher/dashboard");
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
       alert(`Sign in Failed: ${error.message}`);
     } finally {
@@ -63,7 +63,7 @@ export default function TeacherLogin() {
       );
       console.log(response);
       alert("check email");
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
       alert(`Sign in Failed: ${error.message}`);
     } finally {

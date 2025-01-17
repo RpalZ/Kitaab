@@ -1,12 +1,13 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
-import { TeacherTabs } from "../components/TeacherTabs";
+import TeacherTabs from "../components/TeacherTabs"
 import { dashboardStyles as styles } from "../styles/components/dashboard.styles";
 
 export default function TeacherDashboard() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("dashboard");
+  
 
   return (
     <View style={styles.container}>
