@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { authStyles as styles } from '../styles/components/auth.styles';
@@ -8,6 +9,13 @@ export default function StudentLogin() {
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity 
+        style={styles.backButton} 
+        onPress={() => router.back()}
+      >
+        <Ionicons name="arrow-back" size={24} color={COLORS.text.primary} />
+      </TouchableOpacity>
+
       <Text style={styles.title}>Student Login</Text>
       
       <View style={styles.form}>
