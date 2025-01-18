@@ -1,15 +1,8 @@
 import { FIREBASE_AUTH } from "@/FirebaseConfig";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { useRouter } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, LogBox } from "react-native";
-import Home from "./index";
-import StudentDashboard from "./student/dashboard";
-import StudentLogin from "./student/login";
-import { COLORS } from "./styles/theme";
-import TeacherDashboard from "./teacher/dashboard";
-import TeacherLogin from "./teacher/login";
 import { secureStorage } from "./utils/secureStorage";
 
 // Ignore specific warnings
@@ -48,47 +41,33 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return user ? children : null;
 }
 
-export default function Layout() {
-
-  const Stack = createNativeStackNavigator();
-
+export default function RootLayout() {
   return (
-    <Stack.Navigator
-      screenOptions={{
-        headerStyle: {
-          backgroundColor: COLORS.primary,
-        },
-        headerTintColor: COLORS.text.light,
-        headerTitleStyle: {
-          fontWeight: "bold",
-        },
-      }}
-    >
-      <Stack.Screen
-        name="index"
-        options={{ headerShown: false }}
-        component={Home}
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="student/login" options={{ headerShown: false }} />
+      <Stack.Screen name="teacher/login" options={{ headerShown: false }} />
+      <Stack.Screen 
+        name="teacher/dashboard" 
+        options={{ 
+          headerShown: false,
+          gestureEnabled: false,
+        }} 
       />
-      <Stack.Screen
-        name="student/login"
-        options={{ title: "Student Login" }}
-        component={StudentLogin}
+      <Stack.Screen 
+        name="teacher/profile" 
+        options={{ 
+          headerShown: false,
+          gestureEnabled: false,
+        }} 
       />
-      <Stack.Screen
-        name="teacher/login"
-        options={{ title: "Teacher Login" }}
-        component={TeacherLogin}
+      <Stack.Screen 
+        name="student/dashboard" 
+        options={{ 
+          headerShown: false,
+          gestureEnabled: false,
+        }} 
       />
-      <Stack.Screen
-        name="teacher/dashboard"
-        options={{ title: "Teacher Dashboard" }}
-        component={TeacherDashboard}
-      />
-      <Stack.Screen
-        name="student/dashboard"
-        options={{ title: "Student Dashboard" }}
-        component={StudentDashboard}
-      />
-    </Stack.Navigator>
+    </Stack>
   );
 }
