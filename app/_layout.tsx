@@ -11,6 +11,7 @@ import { COLORS } from "./styles/theme";
 import TeacherDashboard from "./teacher/dashboard";
 import TeacherLogin from "./teacher/login";
 import { secureStorage } from "./utils/secureStorage";
+import ClassDetail from "./teacher/class/[id]";
 
 // Ignore specific warnings
 LogBox.ignoreLogs([
@@ -88,6 +89,11 @@ export default function Layout() {
         name="student/dashboard"
         options={{ title: "Student Dashboard" }}
         component={StudentDashboard}
+      />
+      <Stack.Screen
+        name="teacher/class/[id]"
+        options={{ title: "Class Details" }}
+        component={ClassDetail}
       />
     </Stack.Navigator>
   );
