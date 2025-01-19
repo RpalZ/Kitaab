@@ -45,5 +45,51 @@ export const homeStyles = StyleSheet.create({
     fontSize: FONTS.sizes.md,
     textAlign: 'center',
     fontWeight: FONTS.weights.semibold,
+  },  
+  classesSection: {
+    flex: 1,
+    width: '100%',
+    paddingHorizontal: 20,
+    marginTop: 20,
+  },
+  sectionTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    color: COLORS.text.primary,
+  },
+  classesContainer: {
+    flex: 1,
+  },
+  classCard: {
+    backgroundColor: COLORS.white,
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+
+  className: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    color: COLORS.primary,
+  },
+  classInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+  },
+  classInfoText: {
+    fontSize: 14,
+    color: COLORS.text.primary,
+    marginRight: 10,
   },
 }); 
