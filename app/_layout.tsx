@@ -11,12 +11,14 @@ import {
 } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import TeacherDashboard from "./teacher/dashboard";
+import forum from "./teacher/forum";
 import TeacherLogin from "./teacher/login";
 import StudentLogin from "./student/login";
 import Home from "./index";
 import StudentDashboard from "./student/dashboard";
 import { onAuthStateChanged } from "firebase/auth";
 import { FIREBASE_AUTH } from "@/FirebaseConfig";
+import Forum from "./teacher/forum";
 
 // Ignore specific warnings
 LogBox.ignoreLogs([
@@ -59,6 +61,11 @@ export default function Layout() {
         name="teacher/dashboard"
         options={{ title: "Teacher Dashboard" }}
         component={TeacherDashboard}
+      />
+      <Stack.Screen
+        name="teacher/forum"
+        options={{ title: "Teacher Forum" }}
+        component={Forum}
       />
       <Stack.Screen
         name="student/dashboard"
