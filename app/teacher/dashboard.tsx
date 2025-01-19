@@ -54,7 +54,13 @@ export default function TeacherDashboard() {
               <TouchableOpacity 
                 key={index} 
                 style={styles.card}
-                onPress={() => router.push(`/teacher/class/id`)}
+                onPress={() => {
+                  const classId = (index + 1).toString();
+                  router.push({
+                    pathname: "teacher/class/[id]",
+                    params: { id: classId }
+                  });
+                }}
               >
                 <Text style={styles.className}>{className}</Text>
                 <Text style={styles.classInfo}>15 students • 4 resources</Text>

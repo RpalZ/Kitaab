@@ -8,10 +8,10 @@ import Home from "./index";
 import StudentDashboard from "./student/dashboard";
 import StudentLogin from "./student/login";
 import { COLORS } from "./styles/theme";
+import ClassDetail from "./teacher/class/[id]";
 import TeacherDashboard from "./teacher/dashboard";
 import TeacherLogin from "./teacher/login";
 import { secureStorage } from "./utils/secureStorage";
-import ClassDetail from "./teacher/class/[id]";
 
 // Ignore specific warnings
 LogBox.ignoreLogs([

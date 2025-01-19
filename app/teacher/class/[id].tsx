@@ -1,6 +1,8 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { View, Text, ScrollView, TouchableOpacity, FlatList, StyleSheet } from "react-native";
 import { COLORS } from "app/styles/theme";
+import { useLocalSearchParams2 } from "app/utils/uselocalSearchParams2";
+import { useRouter } from "expo-router";
+import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+
 
 // Sample data - in a real app, this would come from your backend
 const sampleClassData = {
@@ -42,9 +44,13 @@ const sampleClassData = {
 };
 
 export default function ClassDetail() {
-  const { id } = useLocalSearchParams();
+  const params = useLocalSearchParams2<{id: string}>();
+  const {id} = params;
+  console.log(params, "params");
   const router = useRouter();
   const classId = Array.isArray(id) ? id[0] : id;
+  console.log(id, "id");
+  console.log(classId, "classId");
   const classData = sampleClassData[Number(classId) as keyof typeof sampleClassData];
 
   if (!classData) {

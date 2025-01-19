@@ -6,7 +6,7 @@ declare module "expo-router" {
     "/teacher/dashboard": undefined;
     "/student/login": undefined;
     "/student/dashboard": undefined;
-    "/teacher/class/[id]": undefined;
+    "teacher/class/[id]": { id: string };
   };
 
   export type TypedNavigator<T> = T;
