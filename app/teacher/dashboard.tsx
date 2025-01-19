@@ -1,5 +1,6 @@
+import { FIREBASE_AUTH } from "@/FirebaseConfig";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { TeacherTabs } from "../components/TeacherTabs";
 import { dashboardStyles as styles } from "../styles/components/dashboard.styles";
@@ -7,6 +8,14 @@ import { dashboardStyles as styles } from "../styles/components/dashboard.styles
 export default function TeacherDashboard() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    const user = FIREBASE_AUTH.currentUser;
+    if (user) {
+      setUserEmail(user.email);
+    }
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -14,7 +23,9 @@ export default function TeacherDashboard() {
         contentContainerStyle={styles.scrollViewContent}
       >
         <View style={styles.header}>
-          <Text style={styles.welcomeText}>Welcome, Teacher!</Text>
+          <Text style={styles.welcomeText}>
+            Welcome, {userEmail ? userEmail.split('@')[0] : 'Teacher'}!
+          </Text>
         </View>
 
         <View style={styles.statsContainer}>

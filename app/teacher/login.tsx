@@ -1,4 +1,5 @@
 import { FIREBASE_AUTH } from "@/FirebaseConfig";
+import { Ionicons } from '@expo/vector-icons';
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useRouter } from "expo-router";
 import {
@@ -74,6 +75,13 @@ export default function TeacherLogin() {
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity 
+        style={styles.backButton} 
+        onPress={() => router.back()}
+      >
+        <Ionicons name="arrow-back" size={24} color={COLORS.text.primary} />
+      </TouchableOpacity>
+
       <Text style={styles.title}>Teacher Login</Text>
 
       <View style={styles.form}>
