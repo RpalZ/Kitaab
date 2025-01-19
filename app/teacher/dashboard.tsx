@@ -62,7 +62,17 @@ export default function TeacherDashboard() {
           <Text style={styles.sectionTitle}>Your Classes</Text>
           {["Mathematics 101", "Physics Basic", "Chemistry Lab"].map(
             (className, index) => (
-              <TouchableOpacity key={index} style={styles.card}>
+              <TouchableOpacity 
+                key={index} 
+                style={styles.card}
+                onPress={() => {
+                  const classId = (index + 1).toString();
+                  router.push({
+                    pathname: "teacher/class/[id]",
+                    params: { id: classId }
+                  });
+                }}
+              >
                 <Text style={styles.className}>{className}</Text>
                 <Text style={styles.classInfo}>15 students • 4 resources</Text>
               </TouchableOpacity>

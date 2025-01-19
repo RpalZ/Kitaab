@@ -3,6 +3,15 @@ import { Stack, useRouter } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, LogBox } from "react-native";
+import Home from "./index";
+import StudentDashboard from "./student/dashboard";
+import StudentLogin from "./student/login";
+import { COLORS } from "./styles/theme";
+import ClassDetail from "./teacher/class/[id]";
+import TeacherDashboard from "./teacher/dashboard";
+import TeacherLogin from "./teacher/login";
+
+
 import { secureStorage } from "./utils/secureStorage";
 
 // Ignore specific warnings
@@ -68,6 +77,15 @@ export default function RootLayout() {
           gestureEnabled: false,
         }} 
       />
-    </Stack>
+
+      <Stack.Screen
+        name="teacher/class/[id]"
+        options={{ title: "Class Details" }}
+        component={ClassDetail}
+      />
+    </Stack.Navigator>
+
+  
+
   );
 }
