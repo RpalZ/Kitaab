@@ -3,6 +3,7 @@ import { Text, TouchableOpacity, View } from "react-native";
 import { homeStyles as styles } from "./styles/components/home.styles";
 import { COLORS } from "./styles/theme";
 
+
 export default function Home() {
   const router = useRouter();
 
@@ -31,3 +32,4 @@ export default function Home() {
     </View>
   );
 }
+

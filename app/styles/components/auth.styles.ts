@@ -31,7 +31,6 @@ export const authStyles = StyleSheet.create({
   },
   input: {
     borderWidth: 1.5,
- 
     borderColor: COLORS.border,
     padding: SPACING.sm,
     borderRadius: 10,
@@ -54,5 +53,12 @@ export const authStyles = StyleSheet.create({
     textAlign: 'center',
     fontSize: FONTS.sizes.sm,
     fontWeight: FONTS.weights.semibold,
+  },
+  backButton: {
+    position: 'absolute',
+    top: SPACING.xl,
+    left: SPACING.md,
+    padding: SPACING.sm,
+    zIndex: 1,
   },
 }); 

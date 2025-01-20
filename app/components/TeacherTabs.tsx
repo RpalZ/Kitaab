@@ -1,27 +1,39 @@
-import { Text, TouchableOpacity, View } from "react-native";
-import { tabStyles as styles } from "../styles/components/tabs.styles";
-import { useRouter } from "expo-router";
-import { TabProps } from "../types/navigation";
+
+
+
+
+import { useRouter } from 'expo-router';
+import { Text, TouchableOpacity, View } from 'react-native';
+import { tabStyles as styles } from '../styles/components/tabs.styles';
+import { TabProps } from '../types/navigation';
 
 const tabs = [
-  { key: "dashboard", label: "Dashboard", route: "app/teacher/dashboard.tsx" },
-  { key: "classes", label: "Classes", route: "app/teacher/dashboard.tsx" },
-  { key: "forum", label: "Forum", route: "app/teacher/forum.tsx" },
-  { key: "profile", label: "Profile", route: "app/teacher/dashboard.tsx" },
+  { key: 'dashboard', label: 'Dashboard', route: '/teacher/dashboard' },
+  { key: 'classes', label: 'Classes', route: '/teacher/classes' },
+  { key: 'forum', label: 'Forum', route: '/teacher/forum' },
+  { key: 'profile', label: 'Profile', route: '/teacher/profile' },
 ];
 
 export default function TeacherTabs({ activeTab, onTabPress }: TabProps) {
   const router = useRouter();
+
+  const handleTabPress = (tab: typeof tabs[0]) => {
+    onTabPress(tab.key);
+    router.replace(tab.route);
+    // router.replace("/teacher/profile");
+  };
 
   return (
     <View style={styles.tabContainer}>
       {tabs.map((tab) => (
         <TouchableOpacity
           key={tab.key}
-          style={[styles.tab, activeTab === tab.key && styles.activeTab]}
-          onPress={() => {
-            onTabPress(tab.key);            
-          }}
+
+          style={[
+            styles.tab,
+            activeTab === tab.key && styles.activeTab
+          ]}
+          onPress={() => handleTabPress(tab)}
         >
           <Text
             style={[

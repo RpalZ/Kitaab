@@ -1,5 +1,6 @@
+import { FIREBASE_AUTH } from "@/FirebaseConfig";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import TeacherTabs from "../components/TeacherTabs";
 import { dashboardStyles as styles } from "../styles/components/dashboard.styles";
@@ -7,12 +8,24 @@ import { dashboardStyles as styles } from "../styles/components/dashboard.styles
 export default function TeacherDashboard() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    const user = FIREBASE_AUTH.currentUser;
+    if (user) {
+      setUserEmail(user.email);
+    }
+  }, []);
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scrollView}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollViewContent}
+      >
         <View style={styles.header}>
-          <Text style={styles.welcomeText}>Welcome, Teacher!</Text>
+          <Text style={styles.welcomeText}>
+            Welcome, {userEmail ? userEmail.split('@')[0] : 'Teacher'}!
+          </Text>
         </View>
 
         <View style={styles.statsContainer}>
@@ -52,7 +65,17 @@ export default function TeacherDashboard() {
           <Text style={styles.sectionTitle}>Your Classes</Text>
           {["Mathematics 101", "Physics Basic", "Chemistry Lab"].map(
             (className, index) => (
-              <TouchableOpacity key={index} style={styles.card}>
+              <TouchableOpacity 
+                key={index} 
+                style={styles.card}
+                onPress={() => {
+                  const classId = (index + 1).toString();
+                  router.push({
+                    pathname: "teacher/class/[id]",
+                    params: { id: classId }
+                  });
+                }}
+              >
                 <Text style={styles.className}>{className}</Text>
                 <Text style={styles.classInfo}>15 students • 4 resources</Text>
               </TouchableOpacity>
