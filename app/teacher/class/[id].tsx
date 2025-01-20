@@ -2,6 +2,8 @@ import { COLORS } from "app/styles/theme";
 import { useLocalSearchParams2 } from "app/utils/uselocalSearchParams2";
 import { useRouter } from "expo-router";
 import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useState } from 'react';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 
 // Sample data - in a real app, this would come from your backend
@@ -44,6 +46,7 @@ const sampleClassData = {
 };
 
 export default function ClassDetail() {
+  const [activeTab, setActiveTab] = useState<'students' | 'resources'>('students');
   const params = useLocalSearchParams2<{id: string}>();
   const {id} = params;
   console.log(params, "params");
@@ -73,51 +76,91 @@ export default function ClassDetail() {
         <Text style={styles.title}>{classData.name}</Text>
       </View>
 
-      <View style={styles.content}>
-        {/* Students Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Students</Text>
-          <ScrollView style={styles.studentList}>
-            {classData.students.map((student) => (
-              <TouchableOpacity
-                key={student.id}
-                style={styles.studentCard}
-                onPress={() => router.push(`/teacher/student/[id]`)}
-              >
-                <View style={styles.studentInfo}>
-                  <Text style={styles.studentName}>{student.name}</Text>
-                  <Text style={styles.studentDetail}>Progress: {student.progress}%</Text>
-                  <Text style={styles.studentDetail}>Last Active: {student.lastActive}</Text>
-                </View>
-                <View style={[styles.progressBar, { width: `${student.progress}%` }]} />
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
+      <View style={styles.tabContainer}>
+        <TouchableOpacity 
+          style={[styles.tab, activeTab === 'students' && styles.activeTab]}
+          onPress={() => setActiveTab('students')}
+        >
+          <Text style={[styles.tabText, activeTab === 'students' && styles.activeTabText]}>Students</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.tab, activeTab === 'resources' && styles.activeTab]}
+          onPress={() => setActiveTab('resources')}
+        >
+          <Text style={[styles.tabText, activeTab === 'resources' && styles.activeTabText]}>Resources</Text>
+        </TouchableOpacity>
+      </View>
 
-        {/* Resources Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Resources</Text>
-          <TouchableOpacity 
-            style={styles.uploadButton}
-            onPress={() => router.push(`/teacher/class/[id]/upload`)}
-          >
-            <Text style={styles.uploadButtonText}>Upload New Resource</Text>
-          </TouchableOpacity>
-          <FlatList
-            data={classData.resources}
-            renderItem={({ item }) => (
-              <TouchableOpacity style={styles.resourceCard}>
-                <Text style={styles.resourceName}>{item.name}</Text>
-                <View style={styles.resourceDetails}>
-                  <Text style={styles.resourceType}>{item.type}</Text>
-                  <Text style={styles.resourceDate}>Uploaded: {item.uploadDate}</Text>
-                </View>
-              </TouchableOpacity>
-            )}
-            keyExtractor={(item) => item.id.toString()}
-          />
-        </View>
+      <View style={styles.content}>
+        {activeTab === 'students' ? (
+          <View style={styles.section}>
+            <FlatList
+              data={classData.students}
+              renderItem={({ item: student }) => (
+                <TouchableOpacity
+                  key={student.id}
+                  style={styles.studentCard}
+                  onPress={() => router.push(`/teacher/student/[id]`)}
+                >
+                  <View style={styles.studentRow}>
+                    <View style={styles.avatar}>
+                      <Text style={styles.avatarText}>
+                        {student.name.split(' ').map(n => n[0]).join('')}
+                      </Text>
+                    </View>
+                    <View style={styles.studentInfo}>
+                      <Text style={styles.studentName}>{student.name}</Text>
+                      <View style={styles.progressContainer}>
+                        <View style={[styles.progressBar, { width: `${student.progress}%` }]} />
+                        <Text style={styles.progressText}>{student.progress}% Complete</Text>
+                      </View>
+                      <Text style={styles.studentDetail}>
+                        Completed {Math.round(student.progress / 100 * 12)} of 12 modules
+                      </Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              )}
+              keyExtractor={(student) => student.id.toString()}
+            />
+          </View>
+        ) : (
+          <View style={styles.section}>
+            <TouchableOpacity 
+              style={styles.uploadButton}
+              onPress={() => router.push(`/teacher/class/[id]/upload`)}
+            >
+              <Text style={styles.uploadButtonText}>Upload New Resource</Text>
+            </TouchableOpacity>
+            <FlatList
+              data={classData.resources}
+              renderItem={({ item }) => (
+                <TouchableOpacity style={styles.resourceCard}>
+                  <View style={styles.resourceRow}>
+                    <MaterialCommunityIcons
+                      name={
+                        item.type === 'PDF' ? 'file-document-outline' :
+                        item.type === 'Interactive' ? 'play-circle-outline' :
+                        'clipboard-list-outline' // for Quiz/Assignment types
+                      }
+                      size={24}
+                      color={COLORS.text.secondary}
+                      style={styles.resourceIcon}
+                    />
+                    <View style={styles.resourceContent}>
+                      <Text style={styles.resourceName}>{item.name}</Text>
+                      <View style={styles.resourceDetails}>
+                        <Text style={styles.resourceType}>{item.type}</Text>
+                        <Text style={styles.resourceDate}>Uploaded: {item.uploadDate}</Text>
+                      </View>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              )}
+              keyExtractor={(item) => item.id.toString()}
+            />
+          </View>
+        )}
       </View>
     </View>
   );
@@ -126,7 +169,7 @@ export default function ClassDetail() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORS.background,
     padding: 20,
   },
   header: {
@@ -146,11 +189,34 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: COLORS.text.primary,
   },
+  tabContainer: {
+    flexDirection: 'row',
+    marginBottom: 20,
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: COLORS.card.primary,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  activeTab: {
+    backgroundColor: COLORS.primary,
+  },
+  tabText: {
+    fontSize: 16,
+    color: COLORS.text.primary,
+  },
+  activeTabText: {
+    color: COLORS.white,
+    fontWeight: '600',
+  },
   content: {
     flex: 1,
   },
   section: {
-    marginBottom: 25,
+    flex: 1,
   },
   sectionTitle: {
     fontSize: 20,
@@ -158,44 +224,73 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     color: COLORS.text.primary,
   },
-  studentList: {
-    maxHeight: '50%',
-  },
   studentCard: {
-    backgroundColor: COLORS.white,
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 10,
-    position: 'relative',
-    overflow: 'hidden',
+    backgroundColor: COLORS.card.primary,
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 16,
+    minHeight: 120,
+  },
+  studentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: '100%',
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: COLORS.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 20,
+  },
+  avatarText: {
+    color: COLORS.white,
+    fontSize: 20,
+    fontWeight: 'bold',
   },
   studentInfo: {
-    zIndex: 1,
+    flex: 1,
+    justifyContent: 'space-between',
   },
   studentName: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 5,
     color: COLORS.text.primary,
+    marginBottom: 12,
   },
-  studentDetail: {
-    fontSize: 14,
-    color: COLORS.text.secondary,
-    opacity: 0.8,
+  progressContainer: {
+    height: 24,
+    backgroundColor: '#2A2A2A',
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginBottom: 8,
+    position: 'relative',
   },
   progressBar: {
-    position: 'absolute',
     height: '100%',
-    backgroundColor: `${COLORS.primary}20`,
-    left: 0,
-    top: 0,
+    backgroundColor: COLORS.primary,
+    borderRadius: 12,
+  },
+  progressText: {
+    position: 'absolute',
+    right: 10,
+    color: COLORS.white,
+    fontSize: 14,
+    lineHeight: 24,
+  },
+  studentDetail: {
+    fontSize: 16,
+    color: COLORS.text.secondary,
+    marginTop: 4,
   },
   uploadButton: {
     backgroundColor: COLORS.primary,
-    padding: 10,
-    borderRadius: 8,
+    padding: 15,
+    borderRadius: 12,
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 20,
   },
   uploadButtonText: {
     color: COLORS.white,
@@ -203,28 +298,41 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   resourceCard: {
-    backgroundColor: COLORS.white,
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 10,
+    backgroundColor: COLORS.card.primary,
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 16,
+    minHeight: 100,
+  },
+  resourceRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  resourceIcon: {
+    marginRight: 15,
+    marginTop: 2,
+  },
+  resourceContent: {
+    flex: 1,
   },
   resourceName: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '500',
-    marginBottom: 5,
+    marginBottom: 12,
     color: COLORS.text.primary,
   },
   resourceDetails: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginTop: 8,
   },
   resourceType: {
-    fontSize: 14,
-    color: COLORS.primary,
+    fontSize: 16,
+    color: COLORS.text.secondary,
+    fontWeight: '500',
   },
   resourceDate: {
-    fontSize: 14,
+    fontSize: 16,
     color: COLORS.text.secondary,
-    opacity: 0.8,
   },
 });
