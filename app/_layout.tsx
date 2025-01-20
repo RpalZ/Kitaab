@@ -1,3 +1,17 @@
+import { useFonts } from "expo-font";
+import * as SplashScreen from "expo-splash-screen";
+import { COLORS } from "./styles/theme";
+import {
+  createStaticNavigation,
+  NavigationContainer,
+} from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import TeacherDashboard from "./teacher/dashboard";
+import TeacherLogin from "./teacher/login";
+import StudentLogin from "./student/login";
+import Home from "./index";
+import StudentDashboard from "./student/dashboard";
+import Forum from "./teacher/forum";
 import { FIREBASE_AUTH } from "@/FirebaseConfig";
 import { Stack, useRouter } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
@@ -7,7 +21,6 @@ import { ActivityIndicator, LogBox } from "react-native";
 
 import { secureStorage } from "./utils/secureStorage";
 
-// Ignore specific warnings
 LogBox.ignoreLogs([
   "Warning: ...", // Add specific warning messages here
   "Deprecated: ...",
@@ -72,6 +85,12 @@ export default function RootLayout() {
       />
 
       <Stack.Screen
+        name="teacher/forum"
+        options={{ title: "Teacher Forum" }}
+      />
+      <Stack.Screen
+        name="student/dashboard"
+        options={{ title: "Student Dashboard" }}
         name="teacher/class/[id]"
         options={{ title: "Class Details" }}
         // component={ClassDetail}
