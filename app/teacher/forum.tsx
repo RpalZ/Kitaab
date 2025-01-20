@@ -1,19 +1,16 @@
-import React, { useState } from "react";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import * as DocumentPicker from "expo-document-picker";
+import { useState } from "react";
 import {
+  Modal,
   ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
-  Modal,
-  Platform,
+  View
 } from "react-native";
+import { TeacherTabs } from "../components/TeacherTabs";
 import { dashboardStyles as styles } from "../styles/components/forum.styles";
-import TeacherTabs from "../components/TeacherTabs";
-import { SearchBar } from "react-native-screens";
-import * as DocumentPicker from "expo-document-picker";
-import * as FileSystem from "expo-file-system";
-import Ionicons from "@expo/vector-icons/Ionicons";
 
 type Resource = {
   title: string;
@@ -30,7 +27,7 @@ export default function Forum() {
   const [title, setTitle] = useState("title");
   const [desc, setDesc] = useState("description");
   const [selectedFile, setSelectedFile] =
-    useState<DocumentPicker.DocumentResult | null>(null);
+    useState<DocumentPicker.DocumentPickerResult | null>(null);
   const [resources, setResources] = useState<Resource[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
 

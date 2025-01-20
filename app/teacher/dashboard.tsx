@@ -2,7 +2,7 @@ import { FIREBASE_AUTH } from "@/FirebaseConfig";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
-import TeacherTabs from "../components/TeacherTabs";
+import { TeacherTabs } from "../components/TeacherTabs";
 import { dashboardStyles as styles } from "../styles/components/dashboard.styles";
 
 export default function TeacherDashboard() {

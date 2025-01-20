@@ -14,7 +14,7 @@ const tabs = [
   { key: 'profile', label: 'Profile', route: '/teacher/profile' },
 ];
 
-export default function TeacherTabs({ activeTab, onTabPress }: TabProps) {
+export  function TeacherTabs({ activeTab, onTabPress }: TabProps) {
   const router = useRouter();
 
   const handleTabPress = (tab: typeof tabs[0]) => {
