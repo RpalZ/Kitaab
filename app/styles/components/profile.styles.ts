@@ -17,7 +17,7 @@ export const profileStyles = StyleSheet.create({
   header: {
     backgroundColor: COLORS.primary,
     padding: SPACING.lg,
-    paddingTop: Platform.OS ? SPACING.xl : SPACING.lg,
+    paddingTop: Platform.OS === 'ios'? SPACING.xl + 10 : SPACING.lg,
     alignItems: 'center',
     borderBottomRightRadius: 24,
   },

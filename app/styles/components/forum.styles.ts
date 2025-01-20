@@ -1,16 +1,16 @@
 import { Platform, StyleSheet } from 'react-native';
 import { COLORS, FONTS, SPACING } from '../theme';
-import { SearchBar } from 'react-native-screens';
 
 export const dashboardStyles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.tertiary,
     padding: SPACING.sm,
+    paddingTop: Platform.OS === 'ios' ? SPACING.lg : SPACING.md,
   },
   scrollView: {
     flex: 1,
-    paddingBottom: Platform.OS === 'ios' ? 90 : 60, // Increased padding for iOS
+    paddingBottom: Platform.OS === 'ios' ? 90 : 60, 
   },
   header: {
     padding: SPACING.md,

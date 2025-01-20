@@ -18,7 +18,7 @@ export const dashboardStyles = StyleSheet.create({
   },
   header: {
     padding: SPACING.md,
-    paddingTop: Platform.OS ? SPACING.lg : SPACING.md,
+    paddingTop: Platform.OS === 'ios' ? SPACING.xl : SPACING.md,
     backgroundColor: COLORS.primary,
     borderBottomRightRadius: 24,
     borderBottomLeftRadius: 24,
