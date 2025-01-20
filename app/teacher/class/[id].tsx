@@ -69,9 +69,9 @@ export default function ClassDetail() {
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPress={() => router.push('/teacher/dashboard')}
         >
-          <Text style={styles.backButtonText}>← Back</Text>
+          <Text style={styles.backButtonText}>← Back </Text>
         </TouchableOpacity>
         <Text style={styles.title}>{classData.name}</Text>
       </View>
@@ -179,10 +179,14 @@ const styles = StyleSheet.create({
   },
   backButton: {
     marginRight: 15,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: COLORS.card.primary,
+    borderRadius: 8,
   },
   backButtonText: {
-    fontSize: 16,
-    color: COLORS.primary,
+    fontSize: 14,
+    color: COLORS.text.secondary,
   },
   title: {
     fontSize: 24,
