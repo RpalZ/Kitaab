@@ -1,14 +1,10 @@
-import { Platform, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { COLORS, FONTS, SPACING } from '../theme';
-
-const TAB_HEIGHT = Platform.OS === 'ios' ? 80 : 60;
 
 export const profileStyles = StyleSheet.create({
   container: {
-    
     flex: 1,
     backgroundColor: COLORS.tertiary,
-    paddingBottom: TAB_HEIGHT,
   },
   scrollViewContent: {
     flexGrow: 1,
@@ -17,7 +13,6 @@ export const profileStyles = StyleSheet.create({
   header: {
     backgroundColor: COLORS.primary,
     padding: SPACING.lg,
-    paddingTop: Platform.OS === 'ios'? SPACING.xl + 10 : SPACING.lg,
     alignItems: 'center',
     borderBottomRightRadius: 24,
   },
