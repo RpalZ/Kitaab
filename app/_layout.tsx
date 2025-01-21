@@ -72,10 +72,24 @@ export default function RootLayout() {
       />
 
       <Stack.Screen
+        name="teacher/forum"
+        options={{ title: "Teacher Forum" }}
+      />
+      <Stack.Screen
+        // name="student/dashboard"
+        // options={{ title: "Student Dashboard" }}
+
         name="teacher/class/[id]"
         options={{ title: "Class Details" }}
         // component={ClassDetail}
       />
+      <Stack.Screen
+    name="teacher/chat"
+    options={{
+      headerShown:false,
+      gestureEnabled:false,
+    }}
+        />
       <Stack.Screen 
         name="student/profile" 
         options={{ 
