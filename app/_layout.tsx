@@ -76,6 +76,13 @@ export default function RootLayout() {
         options={{ title: "Class Details" }}
         // component={ClassDetail}
       />
+      <Stack.Screen 
+        name="student/profile" 
+        options={{ 
+          headerShown: false,
+          gestureEnabled: false,
+        }} 
+      />
     </Stack>
 
   

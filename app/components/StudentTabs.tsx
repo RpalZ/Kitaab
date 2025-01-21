@@ -1,6 +1,7 @@
 import { Text, TouchableOpacity, View } from 'react-native';
 import { tabStyles as styles } from '../styles/components/tabs.styles';
 import { TabProps } from '../types/navigation';
+import { useRouter } from "expo-router";
 
 const tabs = [
   { key: 'dashboard', label: 'Dashboard' },
@@ -10,6 +11,18 @@ const tabs = [
 ];
 
 export function StudentTabs({ activeTab, onTabPress }: TabProps) {
+  const router = useRouter();
+
+  const handleTabPress = (tabKey: string) => {
+    if (tabKey === 'profile') {
+      router.push('/student/profile');
+    } else if (tabKey === 'dashboard') {
+      router.push('/student/dashboard');
+    } else {
+      onTabPress(tabKey);
+    }
+  };
+
   return (
     <View style={styles.tabContainer}>
       {tabs.map((tab) => (
@@ -19,7 +32,7 @@ export function StudentTabs({ activeTab, onTabPress }: TabProps) {
             styles.tab,
             activeTab === tab.key && styles.activeTab
           ]}
-          onPress={() => onTabPress(tab.key)}
+          onPress={() => handleTabPress(tab.key)}
         >
           <Text style={[
             styles.tabText,
