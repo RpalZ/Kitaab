@@ -18,6 +18,10 @@ export function StudentTabs({ activeTab, onTabPress }: TabProps) {
       router.push('/student/profile');
     } else if (tabKey === 'dashboard') {
       router.push('/student/dashboard');
+    } else if (tabKey === 'classes') {
+      router.push('/student/classes');
+    } else if (tabKey === 'resources') {
+      router.push('/student/resources');
     } else {
       onTabPress(tabKey);
     }

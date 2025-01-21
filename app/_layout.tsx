@@ -83,6 +83,20 @@ export default function RootLayout() {
           gestureEnabled: false,
         }} 
       />
+      <Stack.Screen 
+        name="student/classes" 
+        options={{ 
+          headerShown: false,
+          gestureEnabled: false,
+        }} 
+      />
+      <Stack.Screen 
+        name="student/resources" 
+        options={{ 
+          headerShown: false,
+          gestureEnabled: false,
+        }} 
+      />
     </Stack>
 
   
