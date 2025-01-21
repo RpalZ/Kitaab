@@ -53,7 +53,10 @@ export default function TeacherDashboard() {
             <TouchableOpacity style={styles.actionButton}>
               <Text style={styles.actionButtonText}>Add Resource</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton}>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => router.push("/teacher/forum")}
+            >
               <Text style={styles.actionButtonText}>Teacher Forum</Text>
             </TouchableOpacity>
           </View>
