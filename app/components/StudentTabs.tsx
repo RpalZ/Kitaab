@@ -4,10 +4,10 @@ import { TabProps } from '../types/navigation';
 import { useRouter } from "expo-router";
 
 const tabs = [
-  { key: 'dashboard', label: 'Dashboard' },
-  { key: 'classes', label: 'Classes' },
-  { key: 'resources', label: 'Resources' },
-  { key: 'profile', label: 'Profile' },
+  { key: "dashboard", label: "Dashboard", routes: "/teacher/dashboard" },
+  { key: "classes", label: "Classes", routes: "/teacher/dashboard" },
+  { key: "forum", label: "forum", routes: "/teacher/forum" },
+  { key: "profile", label: "Profile", routes: "/teacher/dashboard" },
 ];
 
 export function StudentTabs({ activeTab, onTabPress }: TabProps) {
@@ -38,14 +38,16 @@ export function StudentTabs({ activeTab, onTabPress }: TabProps) {
           ]}
           onPress={() => handleTabPress(tab.key)}
         >
-          <Text style={[
-            styles.tabText,
-            activeTab === tab.key && styles.activeTabText
-          ]}>
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === tab.key && styles.activeTabText,
+            ]}
+          >
             {tab.label}
           </Text>
         </TouchableOpacity>
       ))}
     </View>
   );
-} 
+}
