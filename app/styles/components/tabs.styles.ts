@@ -7,7 +7,6 @@ export const tabStyles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     paddingTop: SPACING.sm,
     paddingBottom: Platform.OS === 'ios' ? 30 : SPACING.sm,
-    paddingInline: SPACING.md,
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
     position: 'absolute',
