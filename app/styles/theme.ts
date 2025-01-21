@@ -10,6 +10,7 @@ export const COLORS = {
   // Base colors
   white: '#FFFFFF',
   background: '#121212',
+  blue: '#62B6CB',
   
   // Text colors
   text: {

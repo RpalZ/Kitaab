@@ -6,6 +6,7 @@ const TAB_HEIGHT = Platform.OS === 'ios' ? 90 : 60;
 export const dashboardStyles = StyleSheet.create({
   container: {
     flex: 1,
+    
     backgroundColor: COLORS.tertiary,
     position: 'relative',
     zIndex: 2,
@@ -17,6 +18,7 @@ export const dashboardStyles = StyleSheet.create({
   },
   header: {
     padding: SPACING.md,
+    paddingTop: Platform.OS === 'ios' ? SPACING.xl : SPACING.md,
     backgroundColor: COLORS.primary,
     borderBottomRightRadius: 24,
     borderBottomLeftRadius: 24,
