@@ -29,6 +29,7 @@ export default function TeacherLogin() {
   const router = useRouter();
 
   useEffect(() => {
+    
     const loginStatus = onAuthStateChanged(auth, (user) => {
       if (user) {
         router.push("/teacher/dashboard");
