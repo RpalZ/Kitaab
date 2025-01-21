@@ -29,6 +29,7 @@ export default function TeacherLogin() {
   const router = useRouter();
 
   useEffect(() => {
+    
     const loginStatus = onAuthStateChanged(auth, (user) => {
       if (user) {
         router.push("/teacher/dashboard");
@@ -47,6 +48,7 @@ export default function TeacherLogin() {
       console.log(response);
       alert("Successful signin");
       router.push("/teacher/dashboard");
+
     } catch (error:any) {
       console.log(error);
       alert(`Sign in Failed: ${error.message}`);
@@ -65,6 +67,7 @@ export default function TeacherLogin() {
       );
       console.log(response);
       alert("check email");
+
     } catch (error:any) {
       console.log(error);
       alert(`Sign in Failed: ${error.message}`);

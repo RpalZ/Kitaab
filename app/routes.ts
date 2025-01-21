@@ -1,3 +1,5 @@
+import { View } from "react-native";
+
 export default {};
 
 declare module "expo-router" {
@@ -7,7 +9,8 @@ declare module "expo-router" {
     "/teacher/profile": undefined;
     "/student/login": undefined;
     "/student/dashboard": undefined;
-    "teacher/class/[id]": { id: string };
+    "/teacher/forum": undefined;
+    "/teacher/class/[id]": { id: string };
   };
 
   export type TypedNavigator<T> = T;
