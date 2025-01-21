@@ -7,6 +7,7 @@ import { ActivityIndicator, LogBox } from "react-native";
 
 import { secureStorage } from "./utils/secureStorage";
 
+// Ignore specific warnings
 LogBox.ignoreLogs([
   "Warning: ...", // Add specific warning messages here
   "Deprecated: ...",
@@ -77,6 +78,7 @@ export default function RootLayout() {
       <Stack.Screen
         // name="student/dashboard"
         // options={{ title: "Student Dashboard" }}
+
         name="teacher/class/[id]"
         options={{ title: "Class Details" }}
         // component={ClassDetail}
@@ -87,6 +89,27 @@ export default function RootLayout() {
       headerShown:false,
       gestureEnabled:false,
     }}
+        />
+      <Stack.Screen 
+        name="student/profile" 
+        options={{ 
+          headerShown: false,
+          gestureEnabled: false,
+        }} 
+      />
+      <Stack.Screen 
+        name="student/classes" 
+        options={{ 
+          headerShown: false,
+          gestureEnabled: false,
+        }} 
+      />
+      <Stack.Screen 
+        name="student/resources" 
+        options={{ 
+          headerShown: false,
+          gestureEnabled: false,
+        }} 
       />
     </Stack>
 

@@ -1,9 +1,10 @@
 import { FIREBASE_AUTH } from "@/FirebaseConfig";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, Text, TouchableOpacity, View, StyleSheet } from "react-native";
 import { TeacherTabs } from "../components/TeacherTabs";
 import { dashboardStyles as styles } from "../styles/components/dashboard.styles";
+import { COLORS } from "../styles/theme";
 
 export default function TeacherDashboard() {
   const router = useRouter();
@@ -52,10 +53,7 @@ export default function TeacherDashboard() {
             <TouchableOpacity style={styles.actionButton}>
               <Text style={styles.actionButtonText}>Add Resource</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={() => router.push("/teacher/forum")}
-            >
+            <TouchableOpacity style={styles.actionButton}>
               <Text style={styles.actionButtonText}>Teacher Forum</Text>
             </TouchableOpacity>
           </View>
