@@ -530,6 +530,7 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingTop: Platform.OS === 'ios' ? 60 : 16,
     borderBottomRightRadius: 24,
+    borderBottomLeftRadius: 24,
   },
   chatSelectorButton: {
     flexDirection: 'row',

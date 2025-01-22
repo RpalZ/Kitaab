@@ -20,6 +20,7 @@ export const profileStyles = StyleSheet.create({
     paddingTop: Platform.OS === 'ios'? SPACING.xl + 10 : SPACING.lg,
     alignItems: 'center',
     borderBottomRightRadius: 24,
+    borderBottomLeftRadius: 24,
   },
   avatarContainer: {
     width: 80,
