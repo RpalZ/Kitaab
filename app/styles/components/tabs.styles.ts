@@ -8,7 +8,7 @@ export const tabStyles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 20,
     paddingBottom: Platform.OS === 'ios' ? 30 : 20,
-    justifyContent: 'space-around',
+    justifyContent: 'center',
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
     position: 'absolute',
@@ -24,7 +24,9 @@ export const tabStyles = StyleSheet.create({
     
   },
   activeTab: {
-    backgroundColor: COLORS.primary,
+    // backgroundColor: COLORS.primary,
+    // color: COLORS.primary,
+    
     borderRadius: 8,
   },
   tabText: {
@@ -33,7 +35,7 @@ export const tabStyles = StyleSheet.create({
     fontWeight: '500',
   },
   activeTabText: {
-    color: COLORS.text.light,
+    color: COLORS.primary,
     fontWeight: '600',
   },
 }); 
