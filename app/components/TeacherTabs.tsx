@@ -11,17 +11,23 @@ const tabs = [
   { key: 'dashboard', label: 'Dashboard', route: '/teacher/dashboard' },
   { key: 'classes', label: 'Classes', route: '/teacher/classes' },
   { key: 'forum', label: 'Forum', route: '/teacher/forum' },
-  { key: 'profile', label: 'Profile', route: '/teacher/profile' },
   { key: 'chat', label: 'Chat', route: '/teacher/chat' },
+  { key: 'profile', label: 'Profile', route: '/teacher/profile' },
 ];
 
 export  function TeacherTabs({ activeTab, onTabPress }: TabProps) {
   const router = useRouter();
 
-  const handleTabPress = (tab: typeof tabs[0]) => {
-    onTabPress(tab.key);
-    router.replace(tab.route);
-    // router.replace("/teacher/profile");
+  const handleTabPress = (tabKey: string) => {
+    if (tabKey === 'profile') {
+      router.push('/teacher/profile');
+    } else if (tabKey === 'dashboard') {
+      router.push('/teacher/dashboard');
+    } else if (tabKey === 'classes') {
+      router.push('/teacher/classes');
+    } else {
+      onTabPress(tabKey);
+    }
   };
 
   return (
@@ -34,7 +40,7 @@ export  function TeacherTabs({ activeTab, onTabPress }: TabProps) {
             styles.tab,
             activeTab === tab.key && styles.activeTab
           ]}
-          onPress={() => handleTabPress(tab)}
+          onPress={() => router.push(tab.route)}
         >
           <Text
             style={[
