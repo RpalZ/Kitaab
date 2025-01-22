@@ -19,7 +19,7 @@ export const dashboardStyles = StyleSheet.create({
   header: {
     padding: SPACING.md,
     paddingTop: Platform.OS === 'ios' ? SPACING.xl : SPACING.md,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.card.primary,
     borderBottomRightRadius: 24,
     borderBottomLeftRadius: 24,
     shadowColor: '#000',
@@ -40,7 +40,7 @@ export const dashboardStyles = StyleSheet.create({
     marginTop: SPACING.sm,
   },
   statBox: {
-    backgroundColor: COLORS.card.primary,
+    backgroundColor: COLORS.accent,
     padding: SPACING.md,
     borderRadius: 16,
     alignItems: 'center',

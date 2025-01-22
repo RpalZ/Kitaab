@@ -31,7 +31,7 @@ export const authStyles = StyleSheet.create({
   },
   input: {
     borderWidth: 1.5,
-    borderColor: COLORS.border,
+    borderColor: COLORS.quaternary,
     padding: SPACING.sm,
     borderRadius: 10,
     fontSize: FONTS.sizes.sm,
@@ -41,7 +41,7 @@ export const authStyles = StyleSheet.create({
     padding: SPACING.sm,
     borderRadius: 10,
     marginTop: SPACING.md,
-    backgroundColor: COLORS.accent,
+    backgroundColor: COLORS.primary,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
