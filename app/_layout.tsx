@@ -1,9 +1,9 @@
 import { FIREBASE_AUTH } from "@/FirebaseConfig";
+import { NativeStackNavigationOptions } from "@react-navigation/native-stack";
 import { Stack, useRouter } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, LogBox, Platform } from "react-native";
-
 
 import { secureStorage } from "./utils/secureStorage";
 
@@ -43,64 +43,34 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function RootLayout() {
+  const screenOptions: NativeStackNavigationOptions = {
+    headerShown: false,
+    contentStyle: {
+      backgroundColor: Platform.OS === 'ios' ? '#000000' : undefined,
+    },
+    presentation: "card",
+    gestureEnabled: true,
+    gestureDirection: "horizontal",
+    // animationTypeForReplace: "push",
+    animation: Platform.select({
+      ios: "fade",
+      android: "fade",
+    }),
+    animationDuration: 250,
+    // customAnimationOnGesture: true,
+    fullScreenGestureEnabled: true,
+    animationTypeForReplace: "pop",
+  };
+
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        // animation: "fade",
-        animationDuration: 200,
-        contentStyle: {
-          backgroundColor: Platform.OS === 'ios' ? '#000000' : undefined,
-        },
-        presentation: "card",
-        gestureEnabled: true,
-        gestureDirection: "horizontal",
-        animationTypeForReplace: "push",
-        animation: Platform.select({
-          ios: "fade",
-          android: "fade",
-        }),
-        transitionSpec: {
-          open: {
-            animation: "timing",
-            config: {
-              duration: 300,
-            },
-          },
-          close: {
-            animation: "timing",
-            config: {
-              duration: 300,
-            },
-          },
-        },
-        cardStyleInterpolator: ({ current, next, layouts } : any) => {
-          return {
-            cardStyle: {
-              transform: [
-                {
-                  translateX: current.progress.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [layouts.screen.width, 0],
-                  }),
-                },
-              ],
-              opacity: current.progress.interpolate({
-                inputRange: [0, 1],
-                outputRange: [0, 1],
-              }),
-            },
-            overlayStyle: {
-              opacity: current.progress.interpolate({
-                inputRange: [0, 1],
-                outputRange: [0, 0.5],
-              }),
-            },
-          };
-        },
-      }}
-    >
-      <Stack.Screen name="index" options={{ headerShown: false }} />
+    <Stack screenOptions={screenOptions}>
+      <Stack.Screen 
+        name="index" 
+        options={{ 
+          headerShown: false,
+          animationDuration: 50
+        }} 
+      />
       <Stack.Screen name="student/login" options={{ headerShown: false }} />
       <Stack.Screen name="teacher/login" options={{ headerShown: false }} />
       <Stack.Screen 
