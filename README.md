@@ -1,95 +1,68 @@
-# Kitaab - Educational Platform
+# Kitaab
 
-A React Native mobile application built with Expo, designed to connect teachers and students in an educational environment.
+A modern learning platform that bridges the gap between teachers and students. Built with React Native and powered by AI.
 
-## Features
+## Quick Start
 
-- Dark mode professional UI
-- Separate interfaces for teachers and students
-- Dashboard with statistics and quick actions
-- Class management system
-- Resource sharing capabilities
+```bash
+# Install dependencies
+npm install
 
-## Prerequisites
+# Start development server
+npx expo start
+```
 
-Before you begin, ensure you have installed:
-- [Node.js](https://nodejs.org/) (v16 or newer)
-- [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
-- [Expo CLI](https://docs.expo.dev/get-started/installation/)
-- [Expo Go](https://expo.dev/client) app on your mobile device (optional)
+## Development Setup
 
-## Installation
+### Prerequisites
+- Node.js 16+
+- Expo Go app (iOS/Android)
+- Firebase account
+- DeepSeek API key
 
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   cd kitaab
-   ```
+### Environment Variables
+Create a `.env` file:
+```
+FIREBASE_API_KEY=xxx
+FIREBASE_AUTH_DOMAIN=xxx
+FIREBASE_PROJECT_ID=xxx
+FIREBASE_STORAGE_BUCKET=xxx
+FIREBASE_MESSAGING_SENDER_ID=xxx
+FIREBASE_APP_ID=xxx
+FIREBASE_MEASUREMENT_ID=xxx
+DEEPSEEK_API_KEY=xxx
+```
 
-2. Install dependencies:
-   ```bash
-   npm install
-   # or
-   yarn install
-   ```
+## Core Features
 
-## Running the App
+- 🔐 Role-based authentication (Teacher/Student)
+- 💬 AI-powered chat assistance
+- 📚 Resource sharing & management  
+- 👥 Student progress tracking
+- 📱 Cross-platform (iOS & Android)
 
-1. Start the development server:
-   ```bash
-   npx expo start
-   ```
+## Tech Stack
 
-2. You can run the app in multiple ways:
-   - Scan the QR code with Expo Go (Android) or Camera app (iOS)
-   - Press 'i' for iOS simulator
-   - Press 'a' for Android emulator
-   - Press 'w' for web browser
-
-## Testing the App
-
-1. Test Teacher Flow:
-   - Launch the app
-   - Click "I'm a Teacher"
-   - Login with any email/password
-   - Explore the teacher dashboard
-
-2. Test Student Flow:
-   - Launch the app
-   - Click "I'm a Student"
-   - Login with any student ID/password
-   - Explore the student dashboard
+- React Native + Expo Router
+- Firebase (Auth & Firestore)
+- DeepSeek AI
+- TypeScript
+- Secure Storage
 
 ## Project Structure
-
 ```
 app/
-├── components/         # Reusable components
-├── styles/            # Styling and theme files
-│   ├── components/    # Component-specific styles
-│   └── theme.ts       # Global theme configuration
-├── types/             # TypeScript type definitions
-├── student/           # Student-specific screens
-├── teacher/           # Teacher-specific screens
-└── index.tsx          # Entry point
+├── components/     # Shared components
+├── styles/        # Theme & styles
+├── teacher/       # Teacher screens
+├── student/       # Student screens
+└── utils/         # Helpers & utils
 ```
 
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## Learn More
-
-To learn more about the technologies used in this project:
-
-- [Expo Documentation](https://docs.expo.dev/)
-- [React Native Documentation](https://reactnative.dev/)
-- [Expo Router Documentation](https://docs.expo.dev/router/introduction/)
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details
+MIT
+
+---
+Built with ❤️ by Desi Boyz
