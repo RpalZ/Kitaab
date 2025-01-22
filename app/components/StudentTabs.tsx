@@ -1,13 +1,13 @@
+import { useRouter } from "expo-router";
 import { Text, TouchableOpacity, View } from "react-native";
 import { tabStyles as styles } from "../styles/components/tabs.styles";
 import { TabProps } from "../types/navigation";
-import { useRouter } from "expo-router";
 
 const tabs = [
-  { key: "dashboard", label: "Dashboard", routes: "/teacher/dashboard" },
-  { key: "classes", label: "Classes", routes: "/teacher/dashboard" },
-  { key: "forum", label: "forum", routes: "/teacher/forum" },
-  { key: "profile", label: "Profile", routes: "/teacher/dashboard" },
+  { key: "dashboard", label: "Dashboard", routes: "/student/dashboard" },
+  { key: "classes", label: "Classes", routes: "/student/dashboard" },
+  { key: "forum", label: "forum", routes: "/student/forum" },
+  { key: "profile", label: "Profile", routes: "/student/dashboard" },
 ];
 
 export default function StudentTabs({ activeTab, onTabPress }: TabProps) {
