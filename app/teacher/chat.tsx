@@ -64,6 +64,7 @@ export default function TeacherChat() {
   const openai = new OpenAI({
     baseURL: 'https://api.deepseek.com',
     apiKey: DEEPSEEK_API_KEY,
+    dangerouslyAllowBrowser: true
   });
 
   // Load last active chat ID and all chats
