@@ -47,7 +47,7 @@ export default function RootLayout() {
     <Stack
       screenOptions={{
         headerShown: false,
-        animation: "fade",
+        // animation: "fade",
         animationDuration: 200,
         contentStyle: {
           backgroundColor: Platform.OS === 'ios' ? '#000000' : undefined,
@@ -74,7 +74,7 @@ export default function RootLayout() {
             },
           },
         },
-        cardStyleInterpolator: ({ current, next, layouts }) => {
+        cardStyleInterpolator: ({ current, next, layouts } : any) => {
           return {
             cardStyle: {
               transform: [

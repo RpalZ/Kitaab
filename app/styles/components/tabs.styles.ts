@@ -1,5 +1,5 @@
 import { Platform, StyleSheet } from 'react-native';
-import { COLORS, FONTS, SPACING } from '../theme';
+import { COLORS } from '../theme';
 
 export const tabStyles = StyleSheet.create({
   tabContainer: {
@@ -7,6 +7,7 @@ export const tabStyles = StyleSheet.create({
     backgroundColor: COLORS.card.primary,
     paddingVertical: 10,
     paddingHorizontal: 20,
+    paddingBottom: Platform.OS === 'ios' ? 30 : 20,
     justifyContent: 'space-around',
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
