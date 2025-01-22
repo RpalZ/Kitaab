@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import StudentTabs from '../components/StudentTabs';
+import { StudentTabs } from '../components/StudentTabs';
 import { dashboardStyles as styles } from '../styles/components/dashboard.styles';
 
 export default function StudentDashboard() {
