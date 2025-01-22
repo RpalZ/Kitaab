@@ -3,7 +3,7 @@ import { DEEPSEEK_API_KEY } from '@env';
 import { Ionicons } from '@expo/vector-icons';
 import { ChatInput } from 'app/components/ChatInput';
 import { COLORS } from 'app/styles/theme';
-import { collection, deleteDoc, doc, getDocs, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDoc, getDocs, orderBy, query, serverTimestamp, setDoc } from 'firebase/firestore';
 import OpenAI from "openai";
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -19,6 +19,7 @@ import {
 } from 'react-native';
 import { TeacherTabs } from '../components/TeacherTabs';
 import { secureStorage } from "../utils/secureStorage";
+// import { chatStyles as styles } from "../styles/chat.styles";
 
 //use firestore to store ai chats between accounts
 //use collections to store the data: Map<userID, Map<chatID, chatPropertiesAndMessageHistory>>
@@ -34,6 +35,7 @@ type Chat = {
   messages: Message[];
 };
 
+// Update Message type to handle both client and server timestamps
 type Message = {
   id: string;
   text: string;
@@ -266,24 +268,103 @@ export default function TeacherChat() {
     </Modal>
   );
 
-  // Add message saving effect for current chat
+  // Load messages when chat changes
   useEffect(() => {
-    if (!userId || !currentChatId || messages.length === 0) return;
+    if (!userId || !currentChatId) return;
+    loadMessages();
+  }, [currentChatId]);
 
-    const saveChatHistory = async () => {
-      try {
-        const chatRef = doc(db, 'users', userId, 'chats', currentChatId);
-        await updateDoc(chatRef, {
-          messages,
+  const loadMessages = async () => {
+    if (!userId || !currentChatId) return;
+    
+    try {
+      setLoading(true);
+      
+      // First, check if the chat exists
+      const chatRef = doc(db, `users/${userId}/chats/${currentChatId}`);
+      const chatDoc = await getDoc(chatRef);
+      
+      if (!chatDoc.exists()) {
+        // If chat doesn't exist, create it with welcome message
+        const welcomeMessage: Message = {
+          id: '1',
+          text: "Hello! I'm your AI teaching assistant. How can I help you today?",
+          sender: 'ai',
+          timestamp: new Date()
+        };
+        
+        await setDoc(chatRef, {
+          title: `Chat ${currentChatId}`,
           lastUpdated: serverTimestamp(),
+          messages: [welcomeMessage]
         });
-      } catch (error) {
-        console.error('Error saving chat messages:', error);
+        
+        // Set initial message
+        setMessages([welcomeMessage]);
+        setLoading(false);
+        return;
       }
-    };
+      
+      // Then load messages
+      const messagesRef = collection(db, `users/${userId}/chats/${currentChatId}/messages`);
+      const q = query(messagesRef, orderBy('timestamp', 'asc'));
+      const querySnapshot = await getDocs(q);
+      
+      const loadedMessages = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Message[];
+      
+      // If no messages exist, add welcome message
+      if (loadedMessages.length === 0) {
+        const welcomeMessage: Message = {
+          id: '1',
+          text: "Hello! I'm your AI teaching assistant. How can I help you today?",
+          sender: 'ai',
+          timestamp: new Date()
+        };
+        
+        await saveMessage(welcomeMessage);
+        setMessages([welcomeMessage]);
+      } else {
+        setMessages(loadedMessages);
+      }
+    } catch (error) {
+      console.error('Error loading messages:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    saveChatHistory();
-  }, [messages, userId, currentChatId]);
+  // Update saveMessage to handle return type
+  const saveMessage = async (message: Message): Promise<Message | undefined> => {
+    if (!userId || !currentChatId) return undefined;
+    
+    try {
+      const messageRef = doc(collection(db, `users/${userId}/chats/${currentChatId}/messages`));
+      const messageWithId = {
+        ...message,
+        id: messageRef.id,
+        timestamp: serverTimestamp()
+      };
+      
+      await setDoc(messageRef, messageWithId);
+      
+      const chatRef = doc(db, `users/${userId}/chats/${currentChatId}`);
+      await setDoc(chatRef, {
+        lastUpdated: serverTimestamp()
+      }, { merge: true });
+      
+      // Return message with client timestamp for immediate display
+      return {
+        ...messageWithId,
+        timestamp: new Date() // Use client timestamp for UI
+      };
+    } catch (error) {
+      console.error('Error saving message:', error);
+      throw error;
+    }
+  };
 
   // Update scrollToBottom to handle large messages better
   const scrollToBottom = (withDelay = false) => {
@@ -348,61 +429,73 @@ export default function TeacherChat() {
     scrollToBottom(true);
   };
 
-  // Update handleSend to scroll after setting loading state
-  const handleSend = async () => {
-    if (!message.trim() || isAiResponding) return;
-
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      text: message.trim(),
-      sender: 'user',
-      timestamp: new Date(),
-    };
+  // Update handleSend to handle undefined returns
+  const handleSend = async (text: string) => {
+    if (!text.trim() || isAiResponding || !userId) return;
     
-    setMessages(prev => [...prev, userMessage]);
-    setMessage('');
     setIsAiResponding(true);
-
+    
     try {
-      // Get chat history for context
-      const chatHistory = messages.map(msg => ({
-        role: msg.sender === 'user' ? 'user' as const : 'assistant' as const,
-        content: msg.text,
-      }));
+      let chatId = currentChatId;
+      if (!chatId) {
+        chatId = Date.now().toString();
+        const chatRef = doc(db, `users/${userId}/chats/${chatId}`);
+        
+        // Create initial welcome message
+        const welcomeMessage: Message = {
+          id: '1',
+          text: "Hello! I'm your AI teaching assistant. How can I help you today?",
+          sender: 'ai',
+          timestamp: new Date()
+        };
 
-      // adding message
-      const completion = await openai.chat.completions.create({
-        messages: [
-          { 
-            role: 'system', 
-            content: 'You are a helpful AI teaching assistant. You help teachers with their questions about education, lesson planning, and student engagement. Keep responses clear and concise.' 
-          },
-          ...chatHistory,
-          { role: 'user', content: message.trim() }
-        ],
-        model: 'deepseek-chat',
-      });
-
-      const aiResponse = completion.choices[0].message.content;
+        await setDoc(chatRef, {
+          id: chatId,
+          title: `Chat ${chatId}`,
+          lastUpdated: serverTimestamp(),
+          messages: [welcomeMessage]
+        });
+        
+        setCurrentChatId(chatId);
+        setMessages([welcomeMessage]);
+      }
       
-      if (aiResponse) {
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        text: text.trim(),
+        sender: 'user',
+        timestamp: new Date()
+      };
+
+      const savedUserMessage = await saveMessage(userMessage);
+      if (savedUserMessage) {
+        setMessages(prev => [...prev, savedUserMessage]);
+      }
+
+      try {
+        const completion = await openai.chat.completions.create({
+          messages: [{ role: "user", content: text }],
+          model: "deepseek-chat",
+        });
+
+        const aiResponse = completion.choices[0]?.message?.content || "Sorry, I couldn't process that.";
+        
         const aiMessage: Message = {
           id: (Date.now() + 1).toString(),
           text: aiResponse,
           sender: 'ai',
-          timestamp: new Date(),
+          timestamp: new Date()
         };
-        setMessages(prev => [...prev, aiMessage]);
+        
+        const savedAiMessage = await saveMessage(aiMessage);
+        if (savedAiMessage) {
+          setMessages(prev => [...prev, savedAiMessage]);
+        }
+      } catch (error) {
+        console.error('Error getting AI response:', error);
       }
     } catch (error) {
-      console.error('Error getting AI response:', error);
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: 'Sorry, I encountered an error. Please try again.',
-        sender: 'ai',
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      console.error('Error in chat sequence:', error);
     } finally {
       setIsAiResponding(false);
     }
