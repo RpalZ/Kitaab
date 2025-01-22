@@ -2,15 +2,18 @@ export default {}
 
 export const COLORS = {
   // Main colors
-  primary: '#1A1A1A',    // Almost black
-  secondary: '#2D2D2D',  // Dark gray
+  primary: '#4F518C',    // purple 1 (light)
+  secondary: '#2C2A4A',  // purple 2 (dark)
   tertiary: '#121212',   // Dark background
-  accent: '#007AFF',     // Professional blue for important actions
+  quaternary: '#907AD6', // purple 4 (light-medium)
+  accent: '#907AD6',     // purple 4 (light-medium)
   
   // Base colors
   white: '#FFFFFF',
   background: '#121212',
   blue: '#62B6CB',
+  error: '#FF3B30',
+  
   
   // Text colors
   text: {
@@ -18,12 +21,6 @@ export const COLORS = {
     secondary: '#A0A0A0',  // Light gray for secondary text
     light: '#FFFFFF',      // White text
   },
-  
-  // UI elements
-  border: '#333333',
-  success: '#00C853',    // Professional green
-  error: '#FF3B30',      // Professional red
-  warning: '#FF9500',    // Professional orange
   
   // Card backgrounds
   card: {

@@ -1,8 +1,7 @@
 import { useRouter } from "expo-router";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View, Image } from "react-native";
 import { homeStyles as styles } from "./styles/components/home.styles";
 import { COLORS } from "./styles/theme";
-
 
 export default function Home() {
   const router = useRouter();
@@ -10,7 +9,13 @@ export default function Home() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <Image
+          source={require("../assets/images/kitaablogowhite (1).png")}
+          style={styles.logo}
+          resizeMode="contain"
+        />
         <Text style={styles.title}>Kitaab</Text>
+
         <Text style={styles.subtitle}>Choose your role to get started</Text>
       </View>
 
@@ -32,4 +37,3 @@ export default function Home() {
     </View>
   );
 }
-

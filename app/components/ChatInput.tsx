@@ -1,14 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from 'app/styles/theme';
-import { Platform, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Platform, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 
 type ChatInputProps = {
   message: string;
   onChangeText: (text: string) => void;
   onSend: () => void;
+  isLoading?: boolean;
 };
 
-export function ChatInput({ message, onChangeText, onSend }: ChatInputProps) {
+export function ChatInput({ message, onChangeText, onSend, isLoading }: ChatInputProps) {
   return (
     <View style={styles.inputContainer}>
       <TextInput
@@ -20,15 +21,19 @@ export function ChatInput({ message, onChangeText, onSend }: ChatInputProps) {
         multiline
       />
       <TouchableOpacity 
-        style={styles.sendButton} 
+        style={styles.sendButton}
         onPress={onSend}
-        disabled={!message.trim()}
+        disabled={!message.trim() || isLoading}
       >
-        <Ionicons 
-          name="send" 
-          size={24} 
-          color={message.trim() ? COLORS.primary : COLORS.text.secondary} 
-        />
+        {isLoading ? (
+          <ActivityIndicator size="small" color={COLORS.text.light} />
+        ) : (
+          <Ionicons 
+            name="send" 
+            size={24} 
+            color={message.trim() ? COLORS.primary : COLORS.text.secondary} 
+          />
+        )}
       </TouchableOpacity>
     </View>
   );
@@ -56,5 +61,11 @@ const styles = StyleSheet.create({
   },
   sendButton: {
     padding: 8,
+  },
+  inputDisabled: {
+    opacity: 0.7,
+  },
+  sendButtonDisabled: {
+    opacity: 0.5,
   },
 }); 
