@@ -109,6 +109,13 @@ export default function RootLayout() {
           gestureEnabled: false,
         }} 
       />
+      <Stack.Screen 
+        name="teacher/classes" 
+        options={{ 
+          headerShown: false,
+          gestureEnabled: false,
+        }} 
+      />
     </Stack>
     
 
