@@ -120,7 +120,7 @@ export default function ClassDetail() {
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton}
-          onPress={() => router.push('/teacher/dashboard')}
+          onPress={() => router.back()}
         >
           <Ionicons name="arrow-back" size={24} color={COLORS.text.light} />
         </TouchableOpacity>
@@ -186,16 +186,8 @@ const styles = StyleSheet.create({
   },
   backButton: {
     marginRight: 15,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: COLORS.card.primary,
-    borderRadius: 8,
   },
-  backButtonText: {
-    fontSize: 14,
-    color: COLORS.text.secondary,
-  },
-  title : {
+  title: {
     fontSize: 24,
     fontWeight: 'bold',
     color: COLORS.text.light,

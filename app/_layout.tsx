@@ -1,17 +1,3 @@
-import { useFonts } from "expo-font";
-import * as SplashScreen from "expo-splash-screen";
-import { COLORS } from "./styles/theme";
-import {
-  createStaticNavigation,
-  NavigationContainer,
-} from "@react-navigation/native";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import TeacherDashboard from "./teacher/dashboard";
-import TeacherLogin from "./teacher/login";
-import StudentLogin from "./student/login";
-import Home from "./index";
-import StudentDashboard from "./student/dashboard";
-import Forum from "./teacher/forum";
 import { FIREBASE_AUTH } from "@/FirebaseConfig";
 import { Stack, useRouter } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
@@ -94,10 +80,18 @@ export default function RootLayout() {
         options={{ title: "Student Dashboard" }}
       />
       <Stack.Screen
+
         name="teacher/class/[id]"
         options={{ title: "Class Details" }}
       />
-      <Stack.Screen 
+      <Stack.Screen
+    name="teacher/chat"
+    options={{
+      headerShown:false,
+      gestureEnabled:false,
+    }}
+      />
+    <Stack.Screen 
         name="student/profile" 
         options={{ 
           headerShown: false,
@@ -119,6 +113,7 @@ export default function RootLayout() {
         }} 
       />
     </Stack>
+    
 
   
 
