@@ -92,4 +92,9 @@ export const homeStyles = StyleSheet.create({
     color: COLORS.text.primary,
     marginRight: 10,
   },
+  logo: {
+    width: 120,
+    height: 120,
+    marginBottom: 20,
+  },
 }); 

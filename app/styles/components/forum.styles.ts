@@ -46,12 +46,8 @@ export const dashboardStyles = StyleSheet.create({
   color: COLORS.white,
   fontSize: FONTS.sizes.lg
   }, 
-  searchBar: {
-    backgroundColor: COLORS.accent,
-    height: 10,
-  },
   addButton: {
-    backgroundColor: "#6200ea",
+    backgroundColor: "#9d4edd",
     borderRadius: 25,
     padding: 16,
     alignItems: "center",

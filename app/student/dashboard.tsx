@@ -1,18 +1,17 @@
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import { StudentTabs } from '../components/StudentTabs';
-import { dashboardStyles as styles } from '../styles/components/dashboard.styles';
+import { useRouter } from "expo-router";
+import { useState } from "react";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { StudentTabs } from "../components/StudentTabs";
+import { dashboardStyles as styles } from "../styles/components/dashboard.styles";
+
 
 export default function StudentDashboard() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState("dashboard");
 
   return (
     <View style={styles.container}>
-      <ScrollView 
-        contentContainerStyle={styles.scrollViewContent}
-      >
+      <ScrollView contentContainerStyle={styles.scrollViewContent}>
         <View style={styles.header}>
           <Text style={styles.welcomeText}>Welcome, Student!</Text>
         </View>
@@ -35,10 +34,10 @@ export default function StudentDashboard() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Your Classes</Text>
           {[
-            'Mathematics 101',
-            'Physics Basic',
-            'Chemistry Lab',
-            'English Literature'
+            "Mathematics 101",
+            "Physics Basic",
+            "Chemistry Lab",
+            "English Literature",
           ].map((className, index) => (
             <TouchableOpacity key={index} style={styles.card}>
               <Text style={styles.className}>{className}</Text>
@@ -53,9 +52,9 @@ export default function StudentDashboard() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Recent Resources</Text>
           {[
-            'Week 3 Math Notes',
-            'Physics Lab Manual',
-            'Chemistry Homework'
+            "Week 3 Math Notes",
+            "Physics Lab Manual",
+            "Chemistry Homework",
           ].map((resource, index) => (
             <TouchableOpacity key={index} style={styles.card}>
               <Text style={styles.className}>{resource}</Text>
@@ -64,10 +63,7 @@ export default function StudentDashboard() {
           ))}
         </View>
       </ScrollView>
-      <StudentTabs 
-        activeTab={activeTab}
-        onTabPress={setActiveTab}
-      />
+      <StudentTabs activeTab={activeTab} onTabPress={setActiveTab} />
     </View>
   );
-} 
+}
