@@ -72,16 +72,14 @@ export default function Forum() {
       const response = await fetch(fileUri);
       const blob = await response.blob();
 
-      // Create a download link dynamically
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", fileName); // Specify the file name
+      link.setAttribute("download", fileName); 
       document.body.appendChild(link);
       link.click();
       link.remove();
 
-      // Release the URL object
       window.URL.revokeObjectURL(url);
 
       alert("Download Complete");

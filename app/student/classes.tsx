@@ -1,12 +1,11 @@
-import { FIREBASE_AUTH } from "@/FirebaseConfig";
+import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from "expo-router";
-import { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
+import { useState } from "react";
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { StudentTabs } from "../components/StudentTabs";
 import { COLORS } from "../styles/theme";
-import { MaterialIcons } from '@expo/vector-icons';
 
-// Mock data - replace with actual API calls in production
+//placeholder stuff
 const mockClasses = [
   {
     id: 1,
