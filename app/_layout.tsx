@@ -2,7 +2,7 @@ import { FIREBASE_AUTH } from "@/FirebaseConfig";
 import { Stack, useRouter } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, LogBox } from "react-native";
+import { ActivityIndicator, LogBox, Platform } from "react-native";
 
 
 import { secureStorage } from "./utils/secureStorage";
@@ -44,7 +44,62 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 export default function RootLayout() {
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        animation: "fade",
+        animationDuration: 200,
+        contentStyle: {
+          backgroundColor: Platform.OS === 'ios' ? '#000000' : undefined,
+        },
+        presentation: "card",
+        gestureEnabled: true,
+        gestureDirection: "horizontal",
+        animationTypeForReplace: "push",
+        animation: Platform.select({
+          ios: "fade",
+          android: "fade",
+        }),
+        transitionSpec: {
+          open: {
+            animation: "timing",
+            config: {
+              duration: 300,
+            },
+          },
+          close: {
+            animation: "timing",
+            config: {
+              duration: 300,
+            },
+          },
+        },
+        cardStyleInterpolator: ({ current, next, layouts }) => {
+          return {
+            cardStyle: {
+              transform: [
+                {
+                  translateX: current.progress.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [layouts.screen.width, 0],
+                  }),
+                },
+              ],
+              opacity: current.progress.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, 1],
+              }),
+            },
+            overlayStyle: {
+              opacity: current.progress.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, 0.5],
+              }),
+            },
+          };
+        },
+      }}
+    >
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="student/login" options={{ headerShown: false }} />
       <Stack.Screen name="teacher/login" options={{ headerShown: false }} />
@@ -72,7 +127,10 @@ export default function RootLayout() {
 
       <Stack.Screen
         name="teacher/forum"
-        options={{ title: "Teacher Forum" }}
+        options={{ 
+          title: "Teacher Forum",
+          headerShown: false,
+        }}
       />
       {/* <Stack.Screen
         name="student/dashboard"
@@ -81,13 +139,16 @@ export default function RootLayout() {
       <Stack.Screen
 
         name="teacher/class/[id]"
-        options={{ title: "Class Details" }}
+        options={{ 
+          title: "Class Details",
+          headerShown: false,
+        }}
       />
       <Stack.Screen
     name="teacher/chat"
     options={{
-      headerShown:false,
-      gestureEnabled:false,
+      headerShown: false,
+      gestureEnabled: false,
     }}
       />
     <Stack.Screen 
