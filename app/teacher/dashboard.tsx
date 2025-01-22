@@ -2,6 +2,7 @@ import { FIREBASE_AUTH } from "@/FirebaseConfig";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { CreateClassModal } from "../components/CreateClassModal";
 import { TeacherTabs } from "../components/TeacherTabs";
 import { dashboardStyles as styles } from "../styles/components/dashboard.styles";
 
@@ -9,6 +10,12 @@ export default function TeacherDashboard() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
+  const [classes, setClasses] = useState([
+    { id: "1", name: "Mathematics 101", students: 15, resources: 4 },
+    { id: "2", name: "Physics Basic", students: 15, resources: 4 },
+    { id: "3", name: "Chemistry Lab", students: 15, resources: 4 },
+  ]);
 
   useEffect(() => {
     const user = FIREBASE_AUTH.currentUser;
@@ -16,6 +23,20 @@ export default function TeacherDashboard() {
       setUserEmail(user.email);
     }
   }, []);
+
+  const handleCreateClass = (classData: {
+    name: string;
+    subject: string;
+    students: Array<{ id: string; name: string; email: string }>;
+  }) => {
+    const newClass = {
+      id: (classes.length + 1).toString(),
+      name: `${classData.subject}: ${classData.name}`,
+      students: classData.students.length,
+      resources: 0,
+    };
+    setClasses([...classes, newClass]);
+  };
 
   return (
     <View style={styles.container}>
@@ -46,7 +67,10 @@ export default function TeacherDashboard() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           <View style={styles.actionButtons}>
-            <TouchableOpacity style={styles.actionButton}>
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={() => setIsCreateModalVisible(true)}
+            >
               <Text style={styles.actionButtonText}>Create Class</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.actionButton}>
@@ -63,26 +87,32 @@ export default function TeacherDashboard() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Your Classes</Text>
-          {["Mathematics 101", "Physics Basic", "Chemistry Lab"].map(
-            (className, index) => (
-              <TouchableOpacity 
-                key={index} 
-                style={styles.card}
-                onPress={() => {
-                  const classId = (index + 1).toString();
-                  router.push({
-                    pathname: "teacher/class/[id]",
-                    params: { id: classId }
-                  });
-                }}
-              >
-                <Text style={styles.className}>{className}</Text>
-                <Text style={styles.classInfo}>15 students • 4 resources</Text>
-              </TouchableOpacity>
-            )
-          )}
+          {classes.map((classItem) => (
+            <TouchableOpacity 
+              key={classItem.id} 
+              style={styles.card}
+              onPress={() => {
+                router.push({
+                  pathname: "teacher/class/[id]",
+                  params: { id: classItem.id }
+                });
+              }}
+            >
+              <Text style={styles.className}>{classItem.name}</Text>
+              <Text style={styles.classInfo}>
+                {classItem.students} students • {classItem.resources} resources
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
       </ScrollView>
+
+      <CreateClassModal
+        visible={isCreateModalVisible}
+        onClose={() => setIsCreateModalVisible(false)}
+        onCreateClass={handleCreateClass}
+      />
+      
       <TeacherTabs activeTab={activeTab} onTabPress={setActiveTab} />
     </View>
   );
