@@ -2,31 +2,38 @@ export default {}
 
 export const COLORS = {
   // Main colors
-  primary: '#4F518C',    // purple 1 (light)
-  secondary: '#2C2A4A',  // purple 2 (dark)
-  tertiary: '#121212',   // Dark background
-  quaternary: '#907AD6', // purple 4 (light-medium)
-  accent: '#907AD6',     // purple 4 (light-medium)
+  primary: '#6B46C1',    // More muted purple (was #7C3AED)
+  secondary: '#553C9A',  // Darker muted purple (was #6D28D9)
+  tertiary: '#000000',   // Pure matte black
+  quaternary: '#805AD5', // Slightly lighter muted purple
+  accent: '#6B46C1',     // Matching primary
   
   // Base colors
+  background: '#000000', // Pure matte black
   white: '#FFFFFF',
-  background: '#121212',
   blue: '#62B6CB',
   error: '#FF3B30',
-  
   
   // Text colors
   text: {
     primary: '#FFFFFF',    // White for main text
-    secondary: '#A0A0A0',  // Light gray for secondary text
+    secondary: '#9CA3AF',  // Gray for secondary text
     light: '#FFFFFF',      // White text
   },
   
   // Card backgrounds
   card: {
-    primary: '#1F1F1F',    // Slightly lighter than background
-    secondary: '#2D2D2D',  // Even lighter for contrast
+    primary: '#121212',    // Very dark gray
+    secondary: '#1A1A1A',  // Slightly lighter dark gray
   },
+  
+  // Additional colors
+  gradient: {
+    start: '#6B46C1',
+    end: '#553C9A',
+  },
+  
+  border: '#1A1A1A',      // Very dark border
 };
 
 export const SPACING = {
