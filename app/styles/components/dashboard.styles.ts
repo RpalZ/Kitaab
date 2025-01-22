@@ -3,6 +3,8 @@ import { COLORS, FONTS, SPACING } from '../theme';
 
 const TAB_HEIGHT = Platform.OS === 'ios' ? 90 : 60;
 
+// export default {}
+
 export const dashboardStyles = StyleSheet.create({
   container: {
     flex: 1,

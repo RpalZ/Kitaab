@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.card.primary,
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: COLORS.border,
+    borderTopColor: COLORS.secondary,
   },
   input: {
     flex: 1,
