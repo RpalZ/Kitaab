@@ -20,6 +20,7 @@ import { ActivityIndicator, LogBox } from "react-native";
 
 
 import { secureStorage } from "./utils/secureStorage";
+import ClassDetail from "./teacher/class/[id]";
 
 LogBox.ignoreLogs([
   "Warning: ...", // Add specific warning messages here
@@ -91,9 +92,10 @@ export default function RootLayout() {
       <Stack.Screen
         name="student/dashboard"
         options={{ title: "Student Dashboard" }}
+      />
+      <Stack.Screen
         name="teacher/class/[id]"
         options={{ title: "Class Details" }}
-        // component={ClassDetail}
       />
       <Stack.Screen 
         name="student/profile" 
