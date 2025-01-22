@@ -19,8 +19,9 @@ export const tabStyles = StyleSheet.create({
   },
   tab: {
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    
   },
   activeTab: {
     backgroundColor: COLORS.primary,
