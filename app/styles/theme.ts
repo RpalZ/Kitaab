@@ -2,38 +2,44 @@ export default {}
 
 export const COLORS = {
   // Main colors
-  primary: '#6B46C1',    // More muted purple (was #7C3AED)
-  secondary: '#553C9A',  // Darker muted purple (was #6D28D9)
-  tertiary: '#000000',   // Pure matte black
-  quaternary: '#805AD5', // Slightly lighter muted purple
-  accent: '#6B46C1',     // Matching primary
+  primary: '#A78BFA',    // Soft purple accent for important elements
+  secondary: '#8B5CF6',  // Slightly darker purple for secondary actions
+  tertiary: '#13111C',   // Dark background with purple tint
+  quaternary: '#907AD6', // Additional purple shade if needed
+  accent: '#A78BFA',     // Matching primary for consistency
   
   // Base colors
-  background: '#000000', // Pure matte black
+  background: '#0E0C15', // Main dark background with subtle purple tint
   white: '#FFFFFF',
   blue: '#62B6CB',
-  error: '#FF3B30',
+  error: '#EF4444',      // Red for errors
+  success: '#10B981',    // Green for success states
   
   // Text colors
   text: {
-    primary: '#FFFFFF',    // White for main text
-    secondary: '#9CA3AF',  // Gray for secondary text
-    light: '#FFFFFF',      // White text
+    primary: '#FFFFFF',   // White for primary text
+    secondary: '#9CA3AF', // Neutral gray for secondary text
+    light: '#FFFFFF',     // White text for dark backgrounds
   },
   
   // Card backgrounds
   card: {
-    primary: '#121212',    // Very dark gray
-    secondary: '#1A1A1A',  // Slightly lighter dark gray
+    primary: '#171522',   // Slightly lighter with purple undertone
+    secondary: '#1E1B2C', // Even lighter with purple undertone
   },
   
-  // Additional colors
+  border: '#231F35',      // Subtle purple-tinted border
+  
+  // Additional colors for specific uses
   gradient: {
-    start: '#6B46C1',
-    end: '#553C9A',
+    start: '#A78BFA',
+    end: '#8B5CF6',
   },
   
-  border: '#1A1A1A',      // Very dark border
+  shadow: {
+    color: '#000000',
+    opacity: 0.2,
+  }
 };
 
 export const SPACING = {

@@ -4,10 +4,10 @@ import { COLORS, FONTS, SPACING } from '../theme';
 export const tabStyles = StyleSheet.create({
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: COLORS.primary,
-    paddingTop: SPACING.sm,
-    paddingBottom: Platform.OS === 'ios' ? 30 : SPACING.sm,
-    paddingInline: SPACING.sm,
+    backgroundColor: COLORS.card.primary,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    justifyContent: 'space-around',
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
     position: 'absolute',
@@ -17,20 +17,21 @@ export const tabStyles = StyleSheet.create({
     zIndex: 1,
   },
   tab: {
-    flex: 1,
     alignItems: 'center',
-    paddingVertical: SPACING.sm,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
   },
   activeTab: {
-    borderBottomWidth: 2,
-    borderBottomColor: COLORS.accent,
+    backgroundColor: COLORS.primary,
+    borderRadius: 8,
   },
   tabText: {
-    fontSize: FONTS.sizes.xs,
     color: COLORS.text.secondary,
+    fontSize: 14,
+    fontWeight: '500',
   },
   activeTabText: {
     color: COLORS.text.light,
-    fontWeight: FONTS.weights.semibold,
+    fontWeight: '600',
   },
 }); 
