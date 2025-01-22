@@ -5,11 +5,18 @@ import { ActivityIndicator, Platform, StyleSheet, TextInput, TouchableOpacity, V
 type ChatInputProps = {
   message: string;
   onChangeText: (text: string) => void;
-  onSend: () => void;
+  onSend: (text: string) => void | Promise<void>;
   isLoading?: boolean;
 };
 
 export function ChatInput({ message, onChangeText, onSend, isLoading }: ChatInputProps) {
+  const handleSend = () => {
+    if (message.trim()) {
+      onSend(message);
+      onChangeText(''); // Clear input after sending
+    }
+  };
+
   return (
     <View style={styles.inputContainer}>
       <TextInput
@@ -22,7 +29,7 @@ export function ChatInput({ message, onChangeText, onSend, isLoading }: ChatInpu
       />
       <TouchableOpacity 
         style={styles.sendButton}
-        onPress={onSend}
+        onPress={handleSend}
         disabled={!message.trim() || isLoading}
       >
         {isLoading ? (
