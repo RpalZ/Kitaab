@@ -2,19 +2,21 @@ import { FIREBASE_AUTH, db } from '@/FirebaseConfig';
 import { Ionicons } from '@expo/vector-icons';
 import { ChatInput } from 'app/components/ChatInput';
 import { COLORS } from 'app/styles/theme';
-import { collection, doc, getDocs, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
-import { useEffect, useState } from 'react';
+import { collection, deleteDoc, doc, getDocs, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
+import { useEffect, useRef, useState } from 'react';
 import {
-    FlatList,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  FlatList,
+  Keyboard,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { TeacherTabs } from '../components/TeacherTabs';
+import { secureStorage } from "../utils/secureStorage";
 
 //use firestore to store ai chats between accounts
 //use collections to store the data: Map<userID, Map<chatID, chatPropertiesAndMessageHistory>>
@@ -52,12 +54,16 @@ export default function TeacherChat() {
   const [isSelectorVisible, setIsSelectorVisible] = useState(false);
   const userId = FIREBASE_AUTH.currentUser?.uid;
 
-  // Load all chats for the user
+  // Add ref for FlatList
+  const flatListRef = useRef<FlatList>(null);
+
+  // Load last active chat ID and all chats
   useEffect(() => {
     if (!userId) return;
     
-    const loadChats = async () => {
+    const loadChatsAndLastActive = async () => {
       try {
+        // Load all chats first
         const chatsRef = collection(db, 'users', userId, 'chats');
         const querySnapshot = await getDocs(chatsRef);
         const loadedChats: Chat[] = [];
@@ -70,21 +76,54 @@ export default function TeacherChat() {
           });
         });
         
+        // Get last active chat ID from storage
+        const lastActiveChatId = await secureStorage.getItem(`lastActiveChat_${userId}`);
+        
+        // If no chats exist, create initial chat
+        if (loadedChats.length === 0) {
+          const newChatRef = doc(collection(db, 'users', userId, 'chats'));
+          const initialChat: Chat = {
+            id: newChatRef.id,
+            title: 'Welcome Chat',
+            lastUpdated: new Date(),
+            messages: [{
+              id: '1',
+              text: 'Hello! I\'m your AI teaching assistant. How can I help you today?',
+              sender: 'ai',
+              timestamp: new Date(),
+            }],
+          };
+          
+          await setDoc(newChatRef, initialChat);
+          loadedChats.push(initialChat);
+        }
+        
         setChats(loadedChats);
         
-        // Set the most recent chat as current if none selected
-        if (!currentChatId && loadedChats.length > 0) {
-          setCurrentChatId(loadedChats[0].id);
-          setMessages(loadedChats[0].messages);
-        }
+        // Set current chat ID to either last active chat (if it exists) or first chat
+        const chatToLoad = lastActiveChatId && loadedChats.find(c => c.id === lastActiveChatId)
+          ? lastActiveChatId
+          : loadedChats[0].id;
+          
+        setCurrentChatId(chatToLoad);
+        setMessages(loadedChats.find(c => c.id === chatToLoad)?.messages || []);
+        
       } catch (error) {
         console.error('Error loading chats:', error);
-        // console.trace(error)
+      } finally {
+        setLoading(false);
       }
     };
     
-    loadChats();
+    loadChatsAndLastActive();
   }, [userId]);
+
+  // Save last active chat ID when it changes
+  useEffect(() => {
+    if (!userId || !currentChatId) return;
+    
+    secureStorage.setItem(`lastActiveChat_${userId}`, currentChatId);
+  }, [currentChatId, userId]);
 
   // Create new chat
   const createNewChat = async () => {
@@ -135,7 +174,39 @@ export default function TeacherChat() {
     </View>
   );
 
-  // Add chat selector modal
+  // Add delete function
+  const deleteChat = async (chatId: string) => {
+    if (!userId) return;
+    
+    try {
+      // Delete from Firestore
+      await deleteDoc(doc(db, 'users', userId, 'chats', chatId));
+      
+      // Update local state
+      setChats(prev => prev.filter(chat => chat.id !== chatId));
+      
+      // If the deleted chat was current, switch to another chat
+      if (chatId === currentChatId) {
+        const remainingChats = chats.filter(chat => chat.id !== chatId);
+        if (remainingChats.length > 0) {
+          setCurrentChatId(remainingChats[0].id);
+          setMessages(remainingChats[0].messages);
+        } else {
+          setCurrentChatId('');
+          setMessages([]);
+        }
+      }
+      
+      // Close modal if no chats left
+      if (chats.length <= 1) {
+        setIsSelectorVisible(false);
+      }
+    } catch (error) {
+      console.error('Error deleting chat:', error);
+    }
+  };
+
+  // Update the chat selector modal render function
   const renderChatSelector = () => (
     <Modal
       visible={isSelectorVisible}
@@ -150,19 +221,28 @@ export default function TeacherChat() {
             data={chats}
             keyExtractor={item => item.id}
             renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.chatItem}
-                onPress={() => {
-                  setCurrentChatId(item.id);
-                  setMessages(item.messages);
-                  setIsSelectorVisible(false);
-                }}
-              >
-                <Text style={styles.chatItemText}>{item.title}</Text>
-                <Text style={styles.chatItemDate}>
-                  {new Date(item.lastUpdated).toLocaleDateString()}
-                </Text>
-              </TouchableOpacity>
+              <View style={styles.chatItemContainer}>
+                <TouchableOpacity
+                  style={styles.chatItem}
+                  onPress={() => {
+                    setCurrentChatId(item.id);
+                    setMessages(item.messages);
+                    setIsSelectorVisible(false);
+                  }}
+                >
+                  <Text style={styles.chatItemText}>{item.title}</Text>
+                  <Text style={styles.chatItemDate}>
+                    {new Date(item.lastUpdated).toLocaleDateString()}
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={styles.deleteButton}
+                  onPress={() => deleteChat(item.id)}
+                >
+                  <Ionicons name="trash-outline" size={20} color={COLORS.error} />
+                </TouchableOpacity>
+              </View>
             )}
           />
           <TouchableOpacity
@@ -249,6 +329,43 @@ export default function TeacherChat() {
     );
   };
 
+  // Add keyboard listener effect
+  useEffect(() => {
+    const keyboardDidHideListener = Keyboard.addListener(
+      'keyboardDidHide',
+      scrollToBottom
+    );
+
+    return () => {
+      keyboardDidHideListener.remove();
+    };
+  }, []);
+
+  // Update scrollToBottom to be more reliable
+  const scrollToBottom = () => {
+    if (flatListRef.current && messages.length > 0) {
+      // Add a small delay to ensure content is laid out
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  };
+
+  // Add effect to scroll when messages change
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  // Add getItemLayout function to optimize FlatList rendering
+  const getItemLayout = (data: any, index: number) => {
+    const itemHeight = 90; // Approximate height of each message bubble
+    return {
+      length: itemHeight,
+      offset: itemHeight * index,
+      index,
+    };
+  };
+
   return (
     <View style={styles.container}>
       {renderHeader()}
@@ -256,10 +373,22 @@ export default function TeacherChat() {
 
       <View style={styles.contentContainer}>
         <FlatList
+          ref={flatListRef}
           data={messages}
           renderItem={renderMessage}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.messageList}
+          onContentSizeChange={scrollToBottom}
+          onLayout={scrollToBottom}
+          getItemLayout={getItemLayout}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          windowSize={10}
+          initialNumToRender={10}
+          maintainVisibleContentPosition={{
+            minIndexForVisible: 0,
+            autoscrollToTopThreshold: 10,
+          }}
         />
 
         <KeyboardAvoidingView
@@ -363,10 +492,15 @@ const styles = StyleSheet.create({
     color: COLORS.text.primary,
     marginBottom: 16,
   },
-  chatItem: {
-    padding: 16,
+  chatItemContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
+  },
+  chatItem: {
+    flex: 1,
+    padding: 16,
   },
   chatItemText: {
     fontSize: 16,
@@ -388,5 +522,10 @@ const styles = StyleSheet.create({
     color: COLORS.text.light,
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  deleteButton: {
+    padding: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 }); 

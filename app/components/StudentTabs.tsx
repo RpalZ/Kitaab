@@ -1,3 +1,4 @@
+
 import { Text, TouchableOpacity, View } from 'react-native';
 import { tabStyles as styles } from '../styles/components/tabs.styles';
 import { TabProps } from '../types/navigation';

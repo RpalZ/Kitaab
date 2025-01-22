@@ -11,8 +11,8 @@ const tabs = [
   { key: 'dashboard', label: 'Dashboard', route: '/teacher/dashboard' },
   { key: 'classes', label: 'Classes', route: '/teacher/classes' },
   { key: 'forum', label: 'Forum', route: '/teacher/forum' },
-  { key: 'profile', label: 'Profile', route: '/teacher/profile' },
   { key: 'chat', label: 'Chat', route: '/teacher/chat' },
+  { key: 'profile', label: 'Profile', route: '/teacher/profile' },
 ];
 
 export  function TeacherTabs({ activeTab, onTabPress }: TabProps) {

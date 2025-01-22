@@ -1,10 +1,10 @@
-import { Ionicons } from "@expo/vector-icons";
 import { FIREBASE_AUTH } from "@/FirebaseConfig";
-import { useRouter } from "expo-router";
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
-import { useState, useEffect } from "react";
-import { authStyles as styles } from "../styles/components/auth.styles";
+import { Ionicons } from "@expo/vector-icons";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import { authStyles as styles } from "../styles/components/auth.styles";
 import { secureStorage } from "../utils/secureStorage";
 
 import {
@@ -79,7 +79,7 @@ export default function StudentLogin() {
       <View style={styles.form}>
         <TextInput
           style={styles.input}
-          value="email"
+          // value="email"
           placeholder="Student Email"
           placeholderTextColor={COLORS.text.secondary}
           keyboardType="default"
@@ -89,7 +89,7 @@ export default function StudentLogin() {
 
         <TextInput
           style={styles.input}
-          value="password"
+          // value="password"
           placeholder="Password"
           placeholderTextColor={COLORS.text.secondary}
           secureTextEntry
