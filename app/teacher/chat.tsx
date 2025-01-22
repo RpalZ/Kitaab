@@ -1,8 +1,10 @@
 import { FIREBASE_AUTH, db } from '@/FirebaseConfig';
+import { DEEPSEEK_API_KEY } from '@env';
 import { Ionicons } from '@expo/vector-icons';
 import { ChatInput } from 'app/components/ChatInput';
 import { COLORS } from 'app/styles/theme';
 import { collection, deleteDoc, doc, getDocs, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
+import OpenAI from "openai";
 import { useEffect, useRef, useState } from 'react';
 import {
   FlatList,
@@ -13,7 +15,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import { TeacherTabs } from '../components/TeacherTabs';
 import { secureStorage } from "../utils/secureStorage";
@@ -52,10 +54,17 @@ export default function TeacherChat() {
   const [currentChatId, setCurrentChatId] = useState<string>('');
   const [chats, setChats] = useState<Chat[]>([]);
   const [isSelectorVisible, setIsSelectorVisible] = useState(false);
+  const [isAiResponding, setIsAiResponding] = useState(false);
   const userId = FIREBASE_AUTH.currentUser?.uid;
 
   // Add ref for FlatList
   const flatListRef = useRef<FlatList>(null);
+
+  // Add OpenAI configuration at the top level of the component
+  const openai = new OpenAI({
+    baseURL: 'https://api.deepseek.com',
+    apiKey: DEEPSEEK_API_KEY,
+  });
 
   // Load last active chat ID and all chats
   useEffect(() => {
@@ -275,33 +284,165 @@ export default function TeacherChat() {
     saveChatHistory();
   }, [messages, userId, currentChatId]);
 
-  const handleSend = () => {
-    if (message.trim()) {
-      const userMessage: Message = {
-        id: Date.now().toString(),
-        text: message.trim(),
-        sender: 'user',
-        timestamp: new Date(),
-      };
-      
-      setMessages(prev => [...prev, userMessage]);
-      setMessage('');
+  // Update scrollToBottom to handle large messages better
+  const scrollToBottom = (withDelay = false) => {
+    if (!flatListRef.current || messages.length === 0) return;
 
-      // Simulate AI response (replace with actual API call later)
+    const scroll = () => {
+      // First scroll without animation to ensure we get to the bottom
+      flatListRef.current?.scrollToOffset({ offset: 999999, animated: false });
+      
+      // Then do an animated scroll with a delay to ensure content is rendered
       setTimeout(() => {
+        flatListRef.current?.scrollToOffset({ offset: 999999, animated: true });
+      }, 100);
+    };
+
+    if (withDelay) {
+      // Add extra delay for large messages
+      setTimeout(scroll, 200);
+    } else {
+      scroll();
+    }
+  };
+
+  // Update message effects
+  useEffect(() => {
+    scrollToBottom(true); // Use delay when messages change
+  }, [messages]);
+
+  // Add keyboard handler function
+  const handleKeyboardHide = () => {
+    scrollToBottom(true);
+  };
+
+  // Update keyboard listener effect
+  useEffect(() => {
+    const keyboardDidHideListener = Keyboard.addListener(
+      'keyboardDidHide',
+      handleKeyboardHide
+    );
+
+    return () => {
+      keyboardDidHideListener.remove();
+    };
+  }, []);
+
+  // Add getItemLayout function to optimize FlatList rendering
+  const getItemLayout = (data: any, index: number) => {
+    const itemHeight = 100; // Approximate height of each message bubble
+    return {
+      length: itemHeight,
+      offset: itemHeight * index,
+      index,
+    };
+  };
+
+  // Add specific handlers for FlatList events
+  const handleContentSizeChange = (w: number, h: number) => {
+    scrollToBottom(true);
+  };
+
+  const handleLayout = () => {
+    scrollToBottom(true);
+  };
+
+  // Update handleSend to scroll after setting loading state
+  const handleSend = async () => {
+    if (!message.trim() || isAiResponding) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      text: message.trim(),
+      sender: 'user',
+      timestamp: new Date(),
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
+    setMessage('');
+    setIsAiResponding(true);
+
+    try {
+      // Get chat history for context
+      const chatHistory = messages.map(msg => ({
+        role: msg.sender === 'user' ? 'user' as const : 'assistant' as const,
+        content: msg.text,
+      }));
+
+      // adding message
+      const completion = await openai.chat.completions.create({
+        messages: [
+          { 
+            role: 'system', 
+            content: 'You are a helpful AI teaching assistant. You help teachers with their questions about education, lesson planning, and student engagement. Keep responses clear and concise.' 
+          },
+          ...chatHistory,
+          { role: 'user', content: message.trim() }
+        ],
+        model: 'deepseek-chat',
+      });
+
+      const aiResponse = completion.choices[0].message.content;
+      
+      if (aiResponse) {
         const aiMessage: Message = {
           id: (Date.now() + 1).toString(),
-          text: 'This is a placeholder response. API integration pending.',
+          text: aiResponse,
           sender: 'ai',
           timestamp: new Date(),
         };
         setMessages(prev => [...prev, aiMessage]);
-      }, 1000);
+      }
+    } catch (error) {
+      console.error('Error getting AI response:', error);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: 'Sorry, I encountered an error. Please try again.',
+        sender: 'ai',
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsAiResponding(false);
     }
   };
 
+  // formatting 
+  const formatText = (text: string) => {
+    const segments = text.split(/(\*\*.*?\*\*|\*.*?\*|```.*?```)/g).filter(Boolean);
+
+    return segments.map((segment, index) => {
+      if (segment.startsWith('**') && segment.endsWith('**')) {
+        // Bold text
+        return (
+          <Text key={index} style={styles.boldText}>
+            {segment.slice(2, -2)}
+          </Text>
+        );
+      } else if (segment.startsWith('*') && segment.endsWith('*')) {
+        // Italic text
+        return (
+          <Text key={index} style={styles.italicText}>
+            {segment.slice(1, -1)}
+          </Text>
+        );
+      } else if (segment.startsWith('```') && segment.endsWith('```')) {
+        // Code block
+        return (
+          <View key={index} style={styles.codeBlock}>
+            <Text style={styles.codeText}>
+              {segment.slice(3, -3)}
+            </Text>
+          </View>
+        );
+      }
+      // Regular text
+      return <Text key={index}>{segment}</Text>;
+    });
+  };
+
+  // using formattext
   const renderMessage = ({ item }: { item: Message }) => {
-    // Convert timestamp to Date if it's a Firestore timestamp
     const messageDate = item.timestamp instanceof Date 
       ? item.timestamp 
       : new Date((item.timestamp as any).seconds * 1000);
@@ -317,7 +458,7 @@ export default function TeacherChat() {
           styles.messageText,
           item.sender === 'user' ? styles.userMessageText : styles.aiMessageText,
         ]}>
-          {item.text}
+          {formatText(item.text)}
         </Text>
         <Text style={styles.timestamp}>
           {messageDate.toLocaleTimeString([], { 
@@ -327,43 +468,6 @@ export default function TeacherChat() {
         </Text>
       </View>
     );
-  };
-
-  // Add keyboard listener effect
-  useEffect(() => {
-    const keyboardDidHideListener = Keyboard.addListener(
-      'keyboardDidHide',
-      scrollToBottom
-    );
-
-    return () => {
-      keyboardDidHideListener.remove();
-    };
-  }, []);
-
-  // Update scrollToBottom to be more reliable
-  const scrollToBottom = () => {
-    if (flatListRef.current && messages.length > 0) {
-      // Add a small delay to ensure content is laid out
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
-    }
-  };
-
-  // Add effect to scroll when messages change
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  // Add getItemLayout function to optimize FlatList rendering
-  const getItemLayout = (data: any, index: number) => {
-    const itemHeight = 90; // Approximate height of each message bubble
-    return {
-      length: itemHeight,
-      offset: itemHeight * index,
-      index,
-    };
   };
 
   return (
@@ -378,13 +482,13 @@ export default function TeacherChat() {
           renderItem={renderMessage}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.messageList}
-          onContentSizeChange={scrollToBottom}
-          onLayout={scrollToBottom}
-          getItemLayout={getItemLayout}
-          removeClippedSubviews={true}
-          maxToRenderPerBatch={10}
-          windowSize={10}
+          onContentSizeChange={() => scrollToBottom(true)}
+          onLayout={() => scrollToBottom(true)}
+          removeClippedSubviews={false}
+          maxToRenderPerBatch={5}
+          windowSize={5}
           initialNumToRender={10}
+          onEndReachedThreshold={0.5}
           maintainVisibleContentPosition={{
             minIndexForVisible: 0,
             autoscrollToTopThreshold: 10,
@@ -399,6 +503,7 @@ export default function TeacherChat() {
             message={message}
             onChangeText={setMessage}
             onSend={handleSend}
+            isLoading={isAiResponding}
           />
         </KeyboardAvoidingView>
       </View>
@@ -527,5 +632,22 @@ const styles = StyleSheet.create({
     padding: 16,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  boldText: {
+    fontWeight: 'bold',
+  },
+  italicText: {
+    fontStyle: 'italic',
+  },
+  codeBlock: {
+    backgroundColor: COLORS.card.secondary,
+    padding: 8,
+    borderRadius: 4,
+    marginVertical: 4,
+  },
+  codeText: {
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    fontSize: 14,
+    color: COLORS.text.primary,
   },
 }); 
