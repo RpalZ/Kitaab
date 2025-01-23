@@ -64,9 +64,9 @@ export default function Home() {
     const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, (user) => {
       if (user) {
         if (user.email?.includes('teacher')) {
-          router.replace('/teacher/chat');
+          router.replace('/teacher/dashboard');
         } else {
-          router.replace('/student/chat');
+          router.replace('/student/dashboard');
         }
       }
     });
