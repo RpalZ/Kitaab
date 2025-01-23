@@ -314,6 +314,7 @@ export default function TeacherChat() {
         id: doc.id,
         ...doc.data()
       })) as Message[];
+
       
       // If no messages exist, add welcome message
       if (loadedMessages.length === 0) {
