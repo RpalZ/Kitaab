@@ -4,7 +4,7 @@ import { useLocalSearchParams2 } from "app/utils/uselocalSearchParams2";
 import { useRouter } from "expo-router";
 import { useState } from 'react';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-
+import { AddStudentModal } from '../../components/AddStudentModal';
 
 // Sample data - in a real app, this would come from your backend
 const sampleClassData = {
@@ -51,7 +51,22 @@ export default function ClassDetail() {
   const {id} = params;
   const router = useRouter();
   const classId = Array.isArray(id) ? id[0] : id;
-  const classData = sampleClassData[Number(classId) as keyof typeof sampleClassData];
+  const [classData, setClassData] = useState(sampleClassData[Number(classId) as keyof typeof sampleClassData]);
+  const [isAddStudentModalVisible, setIsAddStudentModalVisible] = useState(false);
+
+  const handleAddStudent = (email: string) => {
+    const newStudent = {
+      id: classData.students.length + 1,
+      name: email.split('@')[0], // Placeholder name from email
+      email,
+      progress: 0,
+      lastActive: "N/A",
+    };
+    setClassData({
+      ...classData,
+      students: [...classData.students, newStudent],
+    });
+  };
 
   if (!classData) {
     return (
@@ -143,13 +158,26 @@ export default function ClassDetail() {
 
       <View style={styles.content}>
         {activeTab === 'students' ? (
-          <FlatList
-            data={classData.students}
-            renderItem={renderStudentItem}
-            keyExtractor={(item) => item.id.toString()}
-            contentContainerStyle={styles.listContainer}
-            showsVerticalScrollIndicator={false}
-          />
+          <>
+            <FlatList
+              data={classData.students}
+              renderItem={renderStudentItem}
+              keyExtractor={(item) => item.id.toString()}
+              contentContainerStyle={styles.listContainer}
+              showsVerticalScrollIndicator={false}
+            />
+            <TouchableOpacity 
+              style={styles.addButton}
+              onPress={() => setIsAddStudentModalVisible(true)}
+            >
+              <Text style={styles.addButtonText}>Add Student</Text>
+            </TouchableOpacity>
+            <AddStudentModal
+              visible={isAddStudentModalVisible}
+              onClose={() => setIsAddStudentModalVisible(false)}
+              onAddStudent={handleAddStudent}
+            />
+          </>
         ) : (
           <>
             <TouchableOpacity style={styles.addButton}>
