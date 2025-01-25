@@ -65,8 +65,11 @@ export default function Home() {
       if (user) {
         if (user.email?.includes('teacher')) {
           router.replace('/teacher/dashboard');
-        } else {
+        } else if (user.email?.includes('student')) {
           router.replace('/student/dashboard');
+        }
+        else {
+       
         }
       }
     });

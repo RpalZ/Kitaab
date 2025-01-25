@@ -18,7 +18,7 @@ const sampleClassData = {
     ],
     resources: [
       { id: 1, name: "Algebra Basics.pdf", type: "PDF", uploadDate: "2024-03-10" },
-      { id: 2, name: "Geometry Module", type: "Interactive", uploadDate: "2024-03-12" },
+      { id: 2, name: "Geometry Module", type: "PowerPoint", uploadDate: "2024-03-12" },
       { id: 3, name: "Practice Questions", type: "Quiz", uploadDate: "2024-03-14" },
     ]
   },
@@ -127,8 +127,8 @@ export default function ClassDetail() {
         <MaterialCommunityIcons
           name={
             item.type === 'PDF' ? 'file-pdf-box' :
-            item.type === 'Interactive' ? 'play-circle' :
-            item.type === 'PowerPoint' ? 'play-circle' :
+            item.type === 'Quiz' ? 'clipboard-text' :
+            item.type === 'PowerPoint' ? 'microsoft-powerpoint' :
             'clipboard-text'
           }
           size={32}

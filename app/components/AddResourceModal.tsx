@@ -40,9 +40,9 @@ export const AddResourceModal: React.FC<AddResourceModalProps> = ({ visible, onC
             style={styles.picker}
             onValueChange={(itemValue: React.SetStateAction<string>) => setResourceType(itemValue)}
           >
-            <Picker.Item label="Quiz" value="quiz" />
-            <Picker.Item label="PDF File" value="pdf" />
-            <Picker.Item label="PowerPoint" value="powerpoint" />
+            <Picker.Item label="Quiz" value="Quiz" />
+            <Picker.Item label="PDF File" value="PDF" />
+            <Picker.Item label="PowerPoint" value="PowerPoint" />
           </Picker>
           <View style={styles.buttonContainer}>
             <TouchableOpacity style={styles.button} onPress={handleAdd}>
