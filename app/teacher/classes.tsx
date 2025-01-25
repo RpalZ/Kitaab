@@ -4,44 +4,65 @@ import { useState } from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { TeacherTabs } from "../components/TeacherTabs";
 import { COLORS } from "../styles/theme";
-
-const mockClasses = [
-  {
-    id: 1,
-    name: "Mathematics 101",
-    students: 25,
-    averageProgress: 75,
-    nextClass: "2024-03-20",
-    pendingAssignments: 3
-  },
-  {
-    id: 2,
-    name: "Physics Basic",
-    students: 18,
-    averageProgress: 82,
-    nextClass: "2024-03-22",
-    pendingAssignments: 1
-  },
-  {
-    id: 3,
-    name: "Chemistry Lab",
-    students: 22,
-    averageProgress: 68,
-    nextClass: "2024-03-21",
-    pendingAssignments: 2
-  }
-];
+import { CreateClassModal } from "../components/CreateClassModal";
 
 export default function TeacherClasses() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("classes");
+  const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
+  const [mockClasses, setClasses] = useState([
+    {
+      id: 1,
+      name: "Mathematics 101",
+      students: 25,
+      averageProgress: 75,
+      nextClass: "2024-03-20",
+      pendingAssignments: 3
+    },
+    {
+      id: 2,
+      name: "Physics Basic",
+      students: 18,
+      averageProgress: 82,
+      nextClass: "2024-03-22",
+      pendingAssignments: 1
+    },
+    {
+      id: 3,
+      name: "Chemistry Lab",
+      students: 22,
+      averageProgress: 68,
+      nextClass: "2024-03-21",
+      pendingAssignments: 2
+    }
+  ]);
+
+  const handleCreateClass = (classData: {
+    name: string;
+    subject: string;
+    students: Array<{ id: string; name: string; email: string }>;
+  }) => {
+    const newClass = {
+      id: (mockClasses.length + 1),
+      name: `${classData.subject}: ${classData.name}`,
+      students: classData.students.length,
+      averageProgress: 0,
+      nextClass: "TBD",
+      pendingAssignments: 0
+    };
+    setClasses([...mockClasses, newClass]);
+    setIsCreateModalVisible(false);
+  };
 
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <Text style={styles.title}>My Classes</Text>
-          <TouchableOpacity style={styles.addButton}>
+          <TouchableOpacity 
+            style={styles.addButton}
+            onPress={() => setIsCreateModalVisible(true)}
+          >
             <MaterialIcons name="add" size={24} color={COLORS.text.light} />
             <Text style={styles.addButtonText}>Create Class</Text>
           </TouchableOpacity>
@@ -67,7 +88,6 @@ export default function TeacherClasses() {
                   </Text>
                 </View>
               </View>
-
               <View style={styles.statsRow}>
                 <View style={styles.statItem}>
                   <MaterialIcons name="people" size={16} color={COLORS.text.secondary} />
@@ -78,7 +98,6 @@ export default function TeacherClasses() {
                   <Text style={styles.statText}>Next: {classItem.nextClass}</Text>
                 </View>
               </View>
-
               <View style={styles.progressContainer}>
                 <View style={styles.progressInfo}>
                   <Text style={styles.progressText}>Average Progress</Text>
@@ -86,10 +105,7 @@ export default function TeacherClasses() {
                 </View>
                 <View style={styles.progressBar}>
                   <View 
-                    style={[
-                      styles.progressFill,
-                      { width: `${classItem.averageProgress}%` }
-                    ]} 
+                    style={[styles.progressFill, { width: `${classItem.averageProgress}%` }]} 
                   />
                 </View>
               </View>
@@ -97,6 +113,11 @@ export default function TeacherClasses() {
           ))}
         </View>
       </ScrollView>
+      <CreateClassModal
+        visible={isCreateModalVisible}
+        onClose={() => setIsCreateModalVisible(false)}
+        onCreateClass={handleCreateClass}
+      />
       <TeacherTabs activeTab={activeTab} onTabPress={setActiveTab} />
     </View>
   );
@@ -212,4 +233,4 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     borderRadius: 12,
   },
-}); 
+});
