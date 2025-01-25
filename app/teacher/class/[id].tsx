@@ -5,6 +5,7 @@ import { useRouter } from "expo-router";
 import { useState } from 'react';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { AddStudentModal } from '../../components/AddStudentModal';
+import { AddResourceModal } from '../../components/AddResourceModal';
 
 // Sample data - in a real app, this would come from your backend
 const sampleClassData = {
@@ -53,6 +54,7 @@ export default function ClassDetail() {
   const classId = Array.isArray(id) ? id[0] : id;
   const [classData, setClassData] = useState(sampleClassData[Number(classId) as keyof typeof sampleClassData]);
   const [isAddStudentModalVisible, setIsAddStudentModalVisible] = useState(false);
+  const [isAddResourceModalVisible, setIsAddResourceModalVisible] = useState(false);
 
   const handleAddStudent = (email: string) => {
     const newStudent = {
@@ -65,6 +67,17 @@ export default function ClassDetail() {
     setClassData({
       ...classData,
       students: [...classData.students, newStudent],
+    });
+  };
+
+  const handleAddResource = (resource: any) => {
+    const newResource = {
+      id: classData.resources.length + 1,
+      ...resource,
+    };
+    setClassData({
+      ...classData,
+      resources: [...classData.resources, newResource],
     });
   };
 
@@ -115,6 +128,7 @@ export default function ClassDetail() {
           name={
             item.type === 'PDF' ? 'file-pdf-box' :
             item.type === 'Interactive' ? 'play-circle' :
+            item.type === 'PowerPoint' ? 'play-circle' :
             'clipboard-text'
           }
           size={32}
@@ -180,7 +194,10 @@ export default function ClassDetail() {
           </>
         ) : (
           <>
-            <TouchableOpacity style={styles.addButton}>
+            <TouchableOpacity 
+              style={styles.addButton}
+              onPress={() => setIsAddResourceModalVisible(true)}
+            >
               <Ionicons name="add" size={24} color={COLORS.text.light} />
               <Text style={styles.addButtonText}>Add Resource</Text>
             </TouchableOpacity>
@@ -190,6 +207,11 @@ export default function ClassDetail() {
               keyExtractor={(item) => item.id.toString()}
               contentContainerStyle={styles.listContainer}
               showsVerticalScrollIndicator={false}
+            />
+            <AddResourceModal
+              visible={isAddResourceModalVisible}
+              onClose={() => setIsAddResourceModalVisible(false)}
+              onAddResource={handleAddResource}
             />
           </>
         )}
