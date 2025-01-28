@@ -1,10 +1,11 @@
 import { FIREBASE_AUTH } from "@/FirebaseConfig";
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from "@expo/vector-icons";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useRouter } from "expo-router";
 import {
   createUserWithEmailAndPassword,
-  onAuthStateChanged
+  updateProfile,
+  onAuthStateChanged,
 } from "firebase/auth";
 import { useEffect, useState } from "react";
 import {
@@ -12,12 +13,12 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import { authStyles as styles } from "../styles/components/auth.styles";
 import { COLORS } from "../styles/theme";
-import { AuthUtils } from '../utils/auth';
-import { secureStorage } from '../utils/secureStorage';
+import { AuthUtils } from "../utils/auth";
+import { secureStorage } from "../utils/secureStorage";
 
 const Stack = createNativeStackNavigator();
 
@@ -29,7 +30,6 @@ export default function TeacherLogin() {
   const router = useRouter();
 
   useEffect(() => {
-    
     const loginStatus = onAuthStateChanged(auth, (user) => {
       if (user) {
         router.push("/teacher/dashboard");
@@ -41,14 +41,14 @@ export default function TeacherLogin() {
   const signIn = async () => {
     setLoading(true);
     try {
-      await AuthUtils.signInWithRole(email, password, 'teacher');
+      await AuthUtils.signInWithRole(email, password, "teacher");
       const token = await FIREBASE_AUTH.currentUser?.getIdToken();
       if (token) {
-        await secureStorage.setItem('userToken', token);
-        router.replace('/teacher/dashboard');
+        await secureStorage.setItem("userToken", token);
+        router.replace("/teacher/dashboard");
       }
     } catch (error: any) {
-      console.error('Sign in failed:', error);
+      console.error("Sign in failed:", error);
       alert(error.message);
     } finally {
       setLoading(false);
@@ -64,14 +64,14 @@ export default function TeacherLogin() {
         password
       );
 
-      // Immediately create user profile with teacher role after signup
-      await AuthUtils.createUserProfile(response.user.uid, email, 'teacher');
-      
-      console.log('Teacher account created:', response.user.email);
-      router.replace('/teacher/dashboard');
-
+      await AuthUtils.createUserProfile(response.user.uid, email, "teacher");
+      await updateProfile(response.user, {
+        displayName: email.split("@")[0],
+      });
+      console.log("Teacher account created:", response.user.email);
+      router.replace("/teacher/dashboard");
     } catch (error: any) {
-      console.error('Sign up failed:', error);
+      console.error("Sign up failed:", error);
       alert(`Sign up Failed: ${error.message}`);
     } finally {
       setLoading(false);
@@ -80,10 +80,7 @@ export default function TeacherLogin() {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity 
-        style={styles.backButton} 
-        onPress={() => router.back()}
-      >
+      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
         <Ionicons name="arrow-back" size={24} color={COLORS.text.primary} />
       </TouchableOpacity>
 
