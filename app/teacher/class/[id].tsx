@@ -39,7 +39,6 @@ interface ResourceData {
   uploadDate: string;
 }
 
-
 export default function ClassDetail() {
   const [activeTab, setActiveTab] = useState<'students' | 'resources'>('students');
   const params = useLocalSearchParams2<{id: string}>();
@@ -54,7 +53,6 @@ export default function ClassDetail() {
   const [showEditResource, setShowEditResource] = useState(false);
   const [resourceToEdit, setResourceToEdit] = useState<ResourceData | undefined>(undefined);
   const [menuVisibleMap, setMenuVisibleMap] = useState<{ [key: string]: boolean }>({});
- 
 
   const toggleMenu = (resourceId: string) => {
     setMenuVisibleMap(prev => ({
@@ -74,19 +72,12 @@ export default function ClassDetail() {
           style: "destructive",
           onPress: async () => {
             try {
-              // Start a batch write
               const batch = writeBatch(db);
-
-              // Delete the resource
               batch.delete(doc(db, 'classes', id, 'resources', resourceId));
-
-              // Decrement the resources count
               batch.update(doc(db, 'classes', id), {
                 resources: increment(-1)
               });
-
               await batch.commit();
-
               setMenuVisibleMap(prev => ({
                 ...prev,
                 [resourceId]: false
@@ -108,7 +99,6 @@ export default function ClassDetail() {
     const studentsRef = collection(db, 'classes', id, 'students');
     const resourcesRef = collection(db, 'classes', id, 'resources');
 
-    // Get class details
     const fetchClassData = async () => {
       try {
         const docSnap = await getDoc(classRef);
@@ -120,7 +110,6 @@ export default function ClassDetail() {
       }
     };
 
-    // Subscribe to students collection
     const unsubscribeStudents = onSnapshot(studentsRef, (snapshot) => {
       const studentsData: StudentData[] = [];
       snapshot.forEach((doc) => {
@@ -129,7 +118,6 @@ export default function ClassDetail() {
       setStudents(studentsData);
     });
 
-    // Subscribe to resources collection
     const unsubscribeResources = onSnapshot(resourcesRef, (snapshot) => {
       const resourcesData: ResourceData[] = [];
       snapshot.forEach((doc) => {
@@ -172,14 +160,7 @@ export default function ClassDetail() {
   );
 
   const renderResourceItem = ({ item }: { item: ResourceData }) => (
-    <TouchableOpacity 
-      style={styles.resourceItem}
-      onPress={() => {
-        if (item.file?.url) {
-          Linking.openURL(item.file.url);
-        }
-      }}
-    >
+    <View style={styles.resourceItem}>
       <View style={styles.resourceHeader}>
         <MaterialIcons 
           name={
@@ -189,7 +170,6 @@ export default function ClassDetail() {
           } 
           size={24} 
           color={COLORS.text.primary} 
-         
         />
         <Text style={styles.resourceTitle}>{item.title}</Text>
         <Menu
@@ -227,17 +207,24 @@ export default function ClassDetail() {
         </Text>
       )}
 
-      <View style={styles.resourceFooter}>
-        <Text style={styles.resourceDate}>
-          {new Date(item.uploadDate).toLocaleDateString()}
-        </Text>
-        {item.file && (
-          <Text style={styles.resourceFilename}>
-            {item.file.filename}
-          </Text>
-        )}
-      </View>
-    </TouchableOpacity>
+      {item.file?.url && (
+        <TouchableOpacity 
+          style={styles.resourceList}
+          onPress={() => Linking.openURL(item.file!.url)}
+        >
+          <View style={styles.resourceFooter}>
+            <Text style={styles.resourceDate}>
+              {new Date(item.uploadDate).toLocaleDateString()}
+            </Text>
+            {item.file && (
+              <Text style={styles.resourceFilename}>
+                {item.file.filename}
+              </Text>
+            )}
+          </View>
+        </TouchableOpacity>
+      )}
+    </View>
   );
 
   if (loading) {
@@ -303,14 +290,12 @@ export default function ClassDetail() {
               contentContainerStyle={styles.listContainer}
               showsVerticalScrollIndicator={false}
             />
-          
           </>
         ) : (
           <>
             <TouchableOpacity 
               style={styles.addButton}
               onPress={() => setShowAddResource(true)}
-            
             >
               <Ionicons name="add" size={24} color={COLORS.text.light} />
               <Text style={styles.addButtonText}>Add Resource</Text>

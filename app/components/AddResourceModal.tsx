@@ -1,4 +1,3 @@
-
 import { db, storage } from '@/FirebaseConfig';
 import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS } from 'app/styles/theme';
@@ -7,8 +6,8 @@ import * as ImagePicker from 'expo-image-picker';
 import { addDoc, collection, doc, increment, updateDoc, writeBatch } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { useEffect, useState } from 'react';
-import { Keyboard, Modal, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
-
+import { GestureResponderEvent, Keyboard, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 interface ResourceData {
   id: string;
@@ -29,6 +28,8 @@ type AddResourceModalProps = {
   classId: string;
   resourceToEdit?: ResourceData;
 };
+
+// ... previous imports and interfaces stay the same ...
 
 export function AddResourceModal({ visible, onClose, classId, resourceToEdit }: AddResourceModalProps) {
   const [title, setTitle] = useState('');
@@ -52,8 +53,12 @@ export function AddResourceModal({ visible, onClose, classId, resourceToEdit }: 
           type: resourceToEdit.file.type === 'PDF' ? 'application/pdf' : 'image/jpeg'
         });
       }
+    } else {
+      setTitle('');
+      setContent('');
+      setSelectedFile(null);
     }
-  }, [resourceToEdit]);
+  }, [resourceToEdit, visible]);
 
   const pickDocument = async () => {
     try {
@@ -164,7 +169,6 @@ export function AddResourceModal({ visible, onClose, classId, resourceToEdit }: 
     } finally {
       setUploading(false);
     }
-
   };
 
   return (
@@ -174,17 +178,25 @@ export function AddResourceModal({ visible, onClose, classId, resourceToEdit }: 
       visible={visible}
       onRequestClose={onClose}
     >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={styles.centeredView}>
+      <View style={styles.centeredView}>
+        <KeyboardAwareScrollView
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+        >
           <View style={styles.modalView}>
-            <Text style={styles.modalTitle}>Add Resource</Text>
+            <Text style={styles.modalTitle}>
+              {resourceToEdit ? 'Edit Resource' : 'Add Resource'}
+            </Text>
             
             <TextInput
-              style={styles.input}
+              style={[styles.input, styles.titleInput]}
               placeholder="Resource Title"
               placeholderTextColor={COLORS.text.secondary}
               value={title}
               onChangeText={setTitle}
+              autoFocus={!resourceToEdit}
+              returnKeyType="next"
+              enablesReturnKeyAutomatically
             />
 
             <TextInput
@@ -239,7 +251,9 @@ export function AddResourceModal({ visible, onClose, classId, resourceToEdit }: 
                 style={styles.submitButton}
                 onPress={handleSubmit}
               >
-                <Text style={styles.submitButtonText}>Add Resource</Text>
+                <Text style={styles.submitButtonText}>
+                  {resourceToEdit ? 'Update Resource' : 'Add Resource'}
+                </Text>
               </TouchableOpacity>
             )}
 
@@ -251,22 +265,23 @@ export function AddResourceModal({ visible, onClose, classId, resourceToEdit }: 
               <Text style={styles.closeButtonText}>Cancel</Text>
             </TouchableOpacity>
           </View>
-        </View>
-      </TouchableWithoutFeedback>
+        </KeyboardAwareScrollView>
+      </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
   centeredView: {
-     
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: 20,
+  },
   modalView: {
-    width: '90%',
     backgroundColor: COLORS.card.primary,
     borderRadius: 20,
     padding: 20,
@@ -291,8 +306,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     color: COLORS.text.primary,
- 
     marginBottom: 20,
+  },
+  titleInput: {
+    height: 48,
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -364,5 +381,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-}); 
-
+});
