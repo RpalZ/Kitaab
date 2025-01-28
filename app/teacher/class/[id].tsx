@@ -39,6 +39,7 @@ interface ResourceData {
   uploadDate: string;
 }
 
+
 export default function ClassDetail() {
   const [activeTab, setActiveTab] = useState<'students' | 'resources'>('students');
   const params = useLocalSearchParams2<{id: string}>();
@@ -53,6 +54,7 @@ export default function ClassDetail() {
   const [showEditResource, setShowEditResource] = useState(false);
   const [resourceToEdit, setResourceToEdit] = useState<ResourceData | undefined>(undefined);
   const [menuVisibleMap, setMenuVisibleMap] = useState<{ [key: string]: boolean }>({});
+ 
 
   const toggleMenu = (resourceId: string) => {
     setMenuVisibleMap(prev => ({
@@ -187,6 +189,7 @@ export default function ClassDetail() {
           } 
           size={24} 
           color={COLORS.text.primary} 
+         
         />
         <Text style={styles.resourceTitle}>{item.title}</Text>
         <Menu
@@ -300,12 +303,14 @@ export default function ClassDetail() {
               contentContainerStyle={styles.listContainer}
               showsVerticalScrollIndicator={false}
             />
+          
           </>
         ) : (
           <>
             <TouchableOpacity 
               style={styles.addButton}
               onPress={() => setShowAddResource(true)}
+            
             >
               <Ionicons name="add" size={24} color={COLORS.text.light} />
               <Text style={styles.addButtonText}>Add Resource</Text>
@@ -315,6 +320,11 @@ export default function ClassDetail() {
               renderItem={renderResourceItem}
               keyExtractor={(item) => item.id}
               contentContainerStyle={styles.resourceList}
+            />
+            <AddResourceModal
+              visible={isAddResourceModalVisible}
+              onClose={() => setIsAddResourceModalVisible(false)}
+              onAddResource={handleAddResource}
             />
           </>
         )}

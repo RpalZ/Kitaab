@@ -59,6 +59,7 @@ export default function TeacherClasses() {
   }, []);
 
   const handleCreateClass = async (classData: {
+
     name: string;
     subject: string;
     students: Array<{ id: string; name: string; email: string }>;
@@ -87,6 +88,7 @@ export default function TeacherClasses() {
       console.error('Error creating class:', error);
       alert('Failed to create class');
     }
+
   };
 
   return (
@@ -125,7 +127,6 @@ export default function TeacherClasses() {
                   </View>
                 )}
               </View>
-
               <View style={styles.statsRow}>
                 <View style={styles.statItem}>
                   <MaterialIcons name="people" size={16} color={COLORS.text.secondary} />
@@ -136,7 +137,6 @@ export default function TeacherClasses() {
                   <Text style={styles.statText}>Next: {classItem.nextClass}</Text>
                 </View>
               </View>
-
               <View style={styles.progressContainer}>
                 <View style={styles.progressInfo}>
                   <Text style={styles.progressText}>Average Progress</Text>
@@ -144,10 +144,7 @@ export default function TeacherClasses() {
                 </View>
                 <View style={styles.progressBar}>
                   <View 
-                    style={[
-                      styles.progressFill,
-                      { width: `${classItem.averageProgress}%` }
-                    ]} 
+                    style={[styles.progressFill, { width: `${classItem.averageProgress}%` }]} 
                   />
                 </View>
               </View>
@@ -277,4 +274,4 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     borderRadius: 12,
   },
-}); 
+});
