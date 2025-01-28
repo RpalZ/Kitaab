@@ -1,10 +1,17 @@
-import { FIREBASE_AUTH, db } from '@/FirebaseConfig';
+import { FIREBASE_AUTH, db } from "@/FirebaseConfig";
 import { useRouter } from "expo-router";
-import { addDoc, collection, onSnapshot, query, serverTimestamp, where } from 'firebase/firestore';
+import {
+  addDoc,
+  collection,
+  onSnapshot,
+  query,
+  serverTimestamp,
+  where,
+} from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { CreateClassModal } from "../components/CreateClassModal";
-import { ProtectedRoute } from '../components/ProtectedRoute';
+import { ProtectedRoute } from "../components/ProtectedRoute";
 import { TeacherTabs } from "../components/TeacherTabs";
 import { dashboardStyles as styles } from "../styles/components/dashboard.styles";
 
@@ -21,6 +28,7 @@ export default function TeacherDashboard() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState<string>("");
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [classes, setClasses] = useState<ClassData[]>([]);
   const [totalStudents, setTotalStudents] = useState(0);
@@ -31,11 +39,12 @@ export default function TeacherDashboard() {
     if (!user) return;
 
     setUserEmail(user.email);
+    setDisplayName(user.displayName || user.email?.split("@")[0] || "Teacher");
 
     // Query classes for current teacher
     const classesQuery = query(
-      collection(db, 'classes'),
-      where('teacherId', '==', user.uid)
+      collection(db, "classes"),
+      where("teacherId", "==", user.uid)
     );
 
     const unsubscribe = onSnapshot(classesQuery, (snapshot) => {
@@ -67,7 +76,7 @@ export default function TeacherDashboard() {
     if (!user) return;
 
     try {
-      const classRef = collection(db, 'classes');
+      const classRef = collection(db, "classes");
       const newClass = {
         name: `${classData.subject}: ${classData.name}`,
         subject: classData.subject,
@@ -76,27 +85,23 @@ export default function TeacherDashboard() {
         students: classData.students.length,
         resources: 0,
         createdAt: serverTimestamp(),
-        studentIds: classData.students.map(s => s.id)
+        studentIds: classData.students.map((s) => s.id),
       };
 
       await addDoc(classRef, newClass);
       setIsCreateModalVisible(false);
     } catch (error) {
-      console.error('Error creating class:', error);
-      alert('Failed to create class');
+      console.error("Error creating class:", error);
+      alert("Failed to create class");
     }
   };
-    
+
   return (
     <ProtectedRoute requiredRole="teacher">
       <View style={styles.container}>
-        <ScrollView 
-          contentContainerStyle={styles.scrollViewContent}
-        >
+        <ScrollView contentContainerStyle={styles.scrollViewContent}>
           <View style={styles.header}>
-            <Text style={styles.welcomeText}>
-              Welcome, {userEmail ? userEmail.split('@')[0] : 'Teacher'}!
-            </Text>
+            <Text style={styles.welcomeText}>Welcome, {displayName}!</Text>
           </View>
 
           <View style={styles.statsContainer}>
@@ -117,7 +122,7 @@ export default function TeacherDashboard() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Quick Actions</Text>
             <View style={styles.actionButtons}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.actionButton}
                 onPress={() => setIsCreateModalVisible(true)}
               >
@@ -138,19 +143,20 @@ export default function TeacherDashboard() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Your Classes</Text>
             {classes.map((classItem) => (
-              <TouchableOpacity 
-                key={classItem.id} 
+              <TouchableOpacity
+                key={classItem.id}
                 style={styles.card}
                 onPress={() => {
                   router.push({
                     pathname: "teacher/class/[id]",
-                    params: { id: classItem.id }
+                    params: { id: classItem.id },
                   });
                 }}
               >
                 <Text style={styles.className}>{classItem.name}</Text>
                 <Text style={styles.classInfo}>
-                  {classItem.students} students • {classItem.resources} resources
+                  {classItem.students} students • {classItem.resources}{" "}
+                  resources
                 </Text>
               </TouchableOpacity>
             ))}
@@ -162,7 +168,7 @@ export default function TeacherDashboard() {
           onClose={() => setIsCreateModalVisible(false)}
           onCreateClass={handleCreateClass}
         />
-        
+
         <TeacherTabs activeTab={activeTab} onTabPress={setActiveTab} />
       </View>
     </ProtectedRoute>

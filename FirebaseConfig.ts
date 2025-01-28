@@ -1,11 +1,15 @@
 // Import the functions you need from the SDKs you need
 
+
+
 import { FIREBASE_API_KEY, FIREBASE_APP_ID, FIREBASE_AUTH_DOMAIN, FIREBASE_MEASUREMENT_ID, FIREBASE_MESSAGING_SENDER_ID, FIREBASE_PROJECT_ID, FIREBASE_STORAGE_BUCKET } from "@env";
 import { FirebaseApp, getApp, getApps, initializeApp } from "firebase/app";
 
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
+
+
 
 // Validate environment variables
 const requiredEnvVars = {
@@ -24,6 +28,7 @@ Object.entries(requiredEnvVars).forEach(([key, value]) => {
     throw new Error(`Missing required environment variable: ${key}`);
   }
 });
+
 
 const firebaseConfig = {
   apiKey: FIREBASE_API_KEY,
@@ -55,13 +60,14 @@ export const FIREBASE_AUTH = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 
+
 // Add these types to handle user roles
-export type UserRole = 'teacher' | 'student';
+export type UserRole = "teacher" | "student";
 
 export interface UserData {
   uid: string;
   email: string;
   role: UserRole;
   displayName?: string;
-  classIds?: string[];  // References to classes this user belongs to
+  classIds?: string[]; // References to classes this user belongs to
 }
