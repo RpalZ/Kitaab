@@ -44,6 +44,8 @@ export default function ClassDetail() {
   const [activeTab, setActiveTab] = useState<'students' | 'resources'>('students');
   const params = useLocalSearchParams2<{id: string}>();
   const {id} = params;
+  const [isAddStudentModalVisible, setIsAddStudentModalVisible] = useState(false);
+  const [isAddResourceModalVisible, setIsAddResourceModalVisible] = useState(false);
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [classData, setClassData] = useState<ClassData | null>(null);
@@ -62,6 +64,8 @@ export default function ClassDetail() {
       [resourceId]: !prev[resourceId]
     }));
   };
+
+
 
   const handleDelete = async (resourceId: string) => {
     Alert.alert(
@@ -321,11 +325,7 @@ export default function ClassDetail() {
               keyExtractor={(item) => item.id}
               contentContainerStyle={styles.resourceList}
             />
-            <AddResourceModal
-              visible={isAddResourceModalVisible}
-              onClose={() => setIsAddResourceModalVisible(false)}
-              onAddResource={handleAddResource}
-            />
+          
           </>
         )}
       </View>
