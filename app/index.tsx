@@ -6,6 +6,8 @@ import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Image, Text, TouchableOpacity, View } from "react-native";
 import { homeStyles as styles } from "./styles/components/home.styles";
 import { COLORS } from "./styles/theme";
+import { AuthUtils } from './utils/auth';
+import { secureStorage } from './utils/secureStorage';
 
 export default function Home() {
   const router = useRouter();
@@ -61,12 +63,24 @@ export default function Home() {
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, (user) => {
+    const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, async (user) => {
       if (user) {
-        if (user.email?.includes('teacher')) {
-          router.replace('/teacher/chat');
-        } else {
-          router.replace('/student/chat');
+        try {
+          const role = await AuthUtils.getCurrentUserRole();
+          if (role === 'teacher') {
+            router.replace('/teacher/dashboard');
+          } else if (role === 'student') {
+            router.replace('/student/dashboard');
+          } else {
+            // Handle unknown role
+            console.error('Unknown user role');
+            await FIREBASE_AUTH.signOut();
+            await secureStorage.removeItem('userToken');
+          }
+        } catch (error) {
+          console.error('Error checking user role:', error);
+          await FIREBASE_AUTH.signOut();
+          await secureStorage.removeItem('userToken');
         }
       }
     });

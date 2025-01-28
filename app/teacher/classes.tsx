@@ -1,54 +1,110 @@
+import { FIREBASE_AUTH, db } from '@/FirebaseConfig';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { addDoc, collection, onSnapshot, query, serverTimestamp, where } from 'firebase/firestore';
+import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { CreateClassModal } from "../components/CreateClassModal";
 import { TeacherTabs } from "../components/TeacherTabs";
 import { COLORS } from "../styles/theme";
 
-const mockClasses = [
-  {
-    id: 1,
-    name: "Mathematics 101",
-    students: 25,
-    averageProgress: 75,
-    nextClass: "2024-03-20",
-    pendingAssignments: 3
-  },
-  {
-    id: 2,
-    name: "Physics Basic",
-    students: 18,
-    averageProgress: 82,
-    nextClass: "2024-03-22",
-    pendingAssignments: 1
-  },
-  {
-    id: 3,
-    name: "Chemistry Lab",
-    students: 22,
-    averageProgress: 68,
-    nextClass: "2024-03-21",
-    pendingAssignments: 2
-  }
-];
+interface ClassData {
+  id: string;
+  name: string;
+  students: number;
+  averageProgress: number;
+  nextClass: string;
+  pendingAssignments: number;
+  teacherId: string;
+  subject: string;
+}
 
 export default function TeacherClasses() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("classes");
+  const [classes, setClasses] = useState<ClassData[]>([]);
+  const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
+
+  useEffect(() => {
+    const user = FIREBASE_AUTH.currentUser;
+    if (!user) return;
+
+    // Query classes for current teacher
+    const classesQuery = query(
+      collection(db, 'classes'),
+      where('teacherId', '==', user.uid)
+    );
+
+    const unsubscribe = onSnapshot(classesQuery, (snapshot) => {
+      const classesData: ClassData[] = [];
+
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        classesData.push({
+          id: doc.id,
+          name: data.name,
+          students: data.students || 0,
+          averageProgress: data.averageProgress || 0,
+          nextClass: data.nextClass || 'Not scheduled',
+          pendingAssignments: data.pendingAssignments || 0,
+          teacherId: data.teacherId,
+          subject: data.subject
+        });
+      });
+
+      setClasses(classesData);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleCreateClass = async (classData: {
+    name: string;
+    subject: string;
+    students: Array<{ id: string; name: string; email: string }>;
+  }) => {
+    const user = FIREBASE_AUTH.currentUser;
+    if (!user) return;
+
+    try {
+      const classRef = collection(db, 'classes');
+      const newClass = {
+        name: `${classData.subject}: ${classData.name}`,
+        subject: classData.subject,
+        teacherId: user.uid,
+        teacherEmail: user.email,
+        students: classData.students.length,
+        averageProgress: 0,
+        nextClass: 'Not scheduled',
+        pendingAssignments: 0,
+        createdAt: serverTimestamp(),
+        studentIds: classData.students.map(s => s.id)
+      };
+
+      await addDoc(classRef, newClass);
+      setIsCreateModalVisible(false);
+    } catch (error) {
+      console.error('Error creating class:', error);
+      alert('Failed to create class');
+    }
+  };
 
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <Text style={styles.title}>My Classes</Text>
-          <TouchableOpacity style={styles.addButton}>
+          <TouchableOpacity 
+            style={styles.addButton}
+            onPress={() => setIsCreateModalVisible(true)}
+          >
             <MaterialIcons name="add" size={24} color={COLORS.text.light} />
             <Text style={styles.addButtonText}>Create Class</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.classesContainer}>
-          {mockClasses.map((classItem) => (
+          {classes.map((classItem) => (
             <TouchableOpacity
               key={classItem.id}
               style={styles.classCard}
@@ -61,11 +117,13 @@ export default function TeacherClasses() {
             >
               <View style={styles.classHeader}>
                 <Text style={styles.className}>{classItem.name}</Text>
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>
-                    {classItem.pendingAssignments} pending
-                  </Text>
-                </View>
+                {classItem.pendingAssignments > 0 && (
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>
+                      {classItem.pendingAssignments} pending
+                    </Text>
+                  </View>
+                )}
               </View>
 
               <View style={styles.statsRow}>
@@ -97,6 +155,13 @@ export default function TeacherClasses() {
           ))}
         </View>
       </ScrollView>
+
+      <CreateClassModal
+        visible={isCreateModalVisible}
+        onClose={() => setIsCreateModalVisible(false)}
+        onCreateClass={handleCreateClass}
+      />
+
       <TeacherTabs activeTab={activeTab} onTabPress={setActiveTab} />
     </View>
   );

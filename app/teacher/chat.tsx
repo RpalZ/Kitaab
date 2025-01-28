@@ -17,6 +17,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import { ProtectedRoute } from '../components/ProtectedRoute';
 import { TeacherTabs } from '../components/TeacherTabs';
 import { secureStorage } from "../utils/secureStorage";
 // import { chatStyles as styles } from "../styles/chat.styles";
@@ -566,45 +567,47 @@ export default function TeacherChat() {
   };
 
   return (
-    <View style={styles.container}>
-      {renderHeader()}
-      {renderChatSelector()}
+    <ProtectedRoute requiredRole="teacher">
+      <View style={styles.container}>
+        {renderHeader()}
+        {renderChatSelector()}
 
-      <View style={styles.contentContainer}>
-        <FlatList
-          ref={flatListRef}
-          data={messages}
-          renderItem={renderMessage}
-          keyExtractor={item => item.id}
-          contentContainerStyle={styles.messageList}
-          onContentSizeChange={() => scrollToBottom(true)}
-          onLayout={() => scrollToBottom(true)}
-          removeClippedSubviews={false}
-          maxToRenderPerBatch={5}
-          windowSize={5}
-          initialNumToRender={10}
-          onEndReachedThreshold={0.5}
-          maintainVisibleContentPosition={{
-            minIndexForVisible: 0,
-            autoscrollToTopThreshold: 10,
-          }}
-        />
-
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-        >
-          <ChatInput 
-            message={message}
-            onChangeText={setMessage}
-            onSend={handleSend}
-            isLoading={isAiResponding}
+        <View style={styles.contentContainer}>
+          <FlatList
+            ref={flatListRef}
+            data={messages}
+            renderItem={renderMessage}
+            keyExtractor={item => item.id}
+            contentContainerStyle={styles.messageList}
+            onContentSizeChange={() => scrollToBottom(true)}
+            onLayout={() => scrollToBottom(true)}
+            removeClippedSubviews={false}
+            maxToRenderPerBatch={5}
+            windowSize={5}
+            initialNumToRender={10}
+            onEndReachedThreshold={0.5}
+            maintainVisibleContentPosition={{
+              minIndexForVisible: 0,
+              autoscrollToTopThreshold: 10,
+            }}
           />
-        </KeyboardAvoidingView>
-      </View>
 
-      <TeacherTabs activeTab={activeTab} onTabPress={setActiveTab} />
-    </View>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+          >
+            <ChatInput 
+              message={message}
+              onChangeText={setMessage}
+              onSend={handleSend}
+              isLoading={isAiResponding}
+            />
+          </KeyboardAvoidingView>
+        </View>
+
+        <TeacherTabs activeTab={activeTab} onTabPress={setActiveTab} />
+      </View>
+    </ProtectedRoute>
   );
 }
 
@@ -670,7 +673,7 @@ const styles = StyleSheet.create({
   },
   timestamp: {
     fontSize: 12,
-    color: COLORS.text.secondary,
+    color: COLORS.text.light,
     marginTop: 4,
     alignSelf: 'flex-end',
   },

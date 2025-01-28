@@ -8,6 +8,7 @@ export const COLORS = {
   quaternary: '#907AD6', // Additional purple shade if needed
   accent: '#A78BFA',     // Matching primary for consistency
   
+  
   // Base colors
   background: '#0E0C15', // Main dark background with subtle purple tint
   white: '#FFFFFF',
