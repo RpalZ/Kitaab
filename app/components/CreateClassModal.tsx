@@ -1,5 +1,7 @@
+import { db } from '@/FirebaseConfig';
 import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS, FONTS, SPACING } from 'app/styles/theme';
+import { addDoc, collection } from 'firebase/firestore';
 import { useState } from 'react';
 import { Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
@@ -25,35 +27,59 @@ export function CreateClassModal({ visible, onClose, onCreateClass }: CreateClas
   const [studentEmail, setStudentEmail] = useState('');
   const [students, setStudents] = useState<Student[]>([]);
 
-  const addStudent = () => {
-    if (studentEmail.trim()) {
-      const newStudent: Student = {
-        id: Date.now().toString(),
-        name: studentEmail.split('@')[0], // Simple name extraction
-        email: studentEmail.trim(),
-      };
-      setStudents([...students, newStudent]);
-      setStudentEmail('');
+  const handleCreateClass = async () => {
+    if (!className.trim() || !subject.trim()) {
+      alert('Please fill in all required fields');
+      return;
     }
-  };
 
-  const removeStudent = (id: string) => {
-    setStudents(students.filter(student => student.id !== id));
-  };
-
-  const handleCreate = () => {
-    if (className.trim() && subject.trim()) {
+    try {
       onCreateClass({
-        name: className.trim(),
-        subject: subject.trim(),
-        students,
+        name: className,
+        subject,
+        students
       });
+
       // Reset form
       setClassName('');
       setSubject('');
       setStudents([]);
       onClose();
+    } catch (error) {
+      console.error('Error creating class:', error);
+      alert('Failed to create class');
     }
+  };
+
+  const addStudent = async () => {
+    if (!studentEmail.trim()) return;
+
+    // Create a new student profile if it doesn't exist
+    try {
+      const studentId = Date.now().toString(); // You might want to use a better ID generation method
+      const newStudent: Student = {
+        id: studentId,
+        name: studentEmail.split('@')[0],
+        email: studentEmail.trim()
+      };
+
+      // Add student to the students collection
+      await addDoc(collection(db, 'users'), {
+        ...newStudent,
+        role: 'student',
+        classIds: []
+      });
+
+      setStudents([...students, newStudent]);
+      setStudentEmail('');
+    } catch (error) {
+      console.error('Error adding student:', error);
+      alert('Failed to add student');
+    }
+  };
+
+  const removeStudent = (id: string) => {
+    setStudents(students.filter(student => student.id !== id));
   };
 
   return (
@@ -123,7 +149,7 @@ export function CreateClassModal({ visible, onClose, onCreateClass }: CreateClas
             
             <TouchableOpacity
               style={[styles.button, styles.createButton]}
-              onPress={handleCreate}
+              onPress={handleCreateClass}
             >
               <Text style={styles.createButtonText}>Create Class</Text>
             </TouchableOpacity>
@@ -225,14 +251,17 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     backgroundColor: COLORS.card.secondary,
+    justifyContent: "center"
   },
   createButton: {
     backgroundColor: COLORS.primary,
+    justifyContent: "center"
   },
   cancelButtonText: {
     color: COLORS.text.primary,
     fontSize: FONTS.sizes.md,
     fontWeight: FONTS.weights.medium,
+    
   },
   createButtonText: {
     color: COLORS.text.light,

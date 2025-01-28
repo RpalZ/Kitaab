@@ -1,85 +1,248 @@
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { db } from '@/FirebaseConfig';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { COLORS } from "app/styles/theme";
 import { useLocalSearchParams2 } from "app/utils/uselocalSearchParams2";
 import { useRouter } from "expo-router";
-import { useState } from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { AddStudentModal } from '../../components/AddStudentModal';
+import { collection, doc, getDoc, increment, onSnapshot, writeBatch } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
+import { Alert, FlatList, Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Menu } from 'react-native-paper';
 import { AddResourceModal } from '../../components/AddResourceModal';
+import { AddStudentsModal } from '../../components/AddStudentsModal';
+import { LoadingSpinner } from '../../components/LoadingSpinner';
 
-// Sample data - in a real app, this would come from your backend
-const sampleClassData = {
-  1: {
-    name: "Mathematics 101",
-    students: [
-      { id: 1, name: "John Doe", progress: 85, lastActive: "2024-03-15" },
-      { id: 2, name: "Jane Smith", progress: 92, lastActive: "2024-03-14" },
-      { id: 3, name: "Mike Johnson", progress: 78, lastActive: "2024-03-13" },
-    ],
-    resources: [
-      { id: 1, name: "Algebra Basics.pdf", type: "PDF", uploadDate: "2024-03-10" },
-      { id: 2, name: "Geometry Module", type: "PowerPoint", uploadDate: "2024-03-12" },
-      { id: 3, name: "Practice Questions", type: "Quiz", uploadDate: "2024-03-14" },
-    ]
-  },
-  2: {
-    name: "Physics Basic",
-    students: [
-      { id: 1, name: "Alice Brown", progress: 88, lastActive: "2024-03-15" },
-      { id: 2, name: "Bob Wilson", progress: 75, lastActive: "2024-03-14" },
-    ],
-    resources: [
-      { id: 1, name: "Mechanics Introduction.pdf", type: "PDF", uploadDate: "2024-03-10" },
-      { id: 2, name: "Forces Quiz", type: "Quiz", uploadDate: "2024-03-13" },
-    ]
-  },
-  3: {
-    name: "Chemistry Lab",
-    students: [
-      { id: 1, name: "Carol Davis", progress: 95, lastActive: "2024-03-15" },
-      { id: 2, name: "David Miller", progress: 82, lastActive: "2024-03-14" },
-    ],
-    resources: [
-      { id: 1, name: "Lab Safety Guide.pdf", type: "PDF", uploadDate: "2024-03-11" },
-      { id: 2, name: "Periodic Table", type: "Interactive", uploadDate: "2024-03-13" },
-    ]
-  }
-};
+interface ClassData {
+  id: string;
+  name: string;
+  students: StudentData[];
+  resources: ResourceData[];
+  teacherId: string;
+}
+
+interface StudentData {
+  id: string;
+  name: string;
+  progress: number;
+  lastActive: string;
+}
+
+interface ResourceData {
+  id: string;
+  title: string;
+  content?: string;
+  type: 'PDF' | 'Image' | 'Note';
+  file?: {
+    url: string;
+    filename: string;
+    type: 'PDF' | 'Image';
+  };
+  uploadDate: string;
+}
+
 
 export default function ClassDetail() {
   const [activeTab, setActiveTab] = useState<'students' | 'resources'>('students');
   const params = useLocalSearchParams2<{id: string}>();
   const {id} = params;
   const router = useRouter();
-  const classId = Array.isArray(id) ? id[0] : id;
-  const [classData, setClassData] = useState(sampleClassData[Number(classId) as keyof typeof sampleClassData]);
-  const [isAddStudentModalVisible, setIsAddStudentModalVisible] = useState(false);
-  const [isAddResourceModalVisible, setIsAddResourceModalVisible] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [classData, setClassData] = useState<ClassData | null>(null);
+  const [students, setStudents] = useState<StudentData[]>([]);
+  const [resources, setResources] = useState<ResourceData[]>([]);
+  const [showAddStudents, setShowAddStudents] = useState(false);
+  const [showAddResource, setShowAddResource] = useState(false);
+  const [showEditResource, setShowEditResource] = useState(false);
+  const [resourceToEdit, setResourceToEdit] = useState<ResourceData | undefined>(undefined);
+  const [menuVisibleMap, setMenuVisibleMap] = useState<{ [key: string]: boolean }>({});
+ 
 
-  const handleAddStudent = (email: string) => {
-    const newStudent = {
-      id: classData.students.length + 1,
-      name: email.split('@')[0], // Placeholder name from email
-      email,
-      progress: 0,
-      lastActive: "N/A",
-    };
-    setClassData({
-      ...classData,
-      students: [...classData.students, newStudent],
-    });
+  const toggleMenu = (resourceId: string) => {
+    setMenuVisibleMap(prev => ({
+      ...prev,
+      [resourceId]: !prev[resourceId]
+    }));
   };
 
-  const handleAddResource = (resource: any) => {
-    const newResource = {
-      id: classData.resources.length + 1,
-      ...resource,
-    };
-    setClassData({
-      ...classData,
-      resources: [...classData.resources, newResource],
-    });
+  const handleDelete = async (resourceId: string) => {
+    Alert.alert(
+      "Delete Resource",
+      "Are you sure you want to delete this resource?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Delete", 
+          style: "destructive",
+          onPress: async () => {
+            try {
+              // Start a batch write
+              const batch = writeBatch(db);
+
+              // Delete the resource
+              batch.delete(doc(db, 'classes', id, 'resources', resourceId));
+
+              // Decrement the resources count
+              batch.update(doc(db, 'classes', id), {
+                resources: increment(-1)
+              });
+
+              await batch.commit();
+
+              setMenuVisibleMap(prev => ({
+                ...prev,
+                [resourceId]: false
+              }));
+            } catch (error) {
+              console.error('Error deleting resource:', error);
+              Alert.alert('Error', 'Failed to delete resource');
+            }
+          }
+        }
+      ]
+    );
   };
+
+  useEffect(() => {
+    if (!id) return;
+
+    const classRef = doc(db, 'classes', id);
+    const studentsRef = collection(db, 'classes', id, 'students');
+    const resourcesRef = collection(db, 'classes', id, 'resources');
+
+    // Get class details
+    const fetchClassData = async () => {
+      try {
+        const docSnap = await getDoc(classRef);
+        if (docSnap.exists()) {
+          setClassData({ id: docSnap.id, ...docSnap.data() } as ClassData);
+        }
+      } catch (error) {
+        console.error('Error fetching class:', error);
+      }
+    };
+
+    // Subscribe to students collection
+    const unsubscribeStudents = onSnapshot(studentsRef, (snapshot) => {
+      const studentsData: StudentData[] = [];
+      snapshot.forEach((doc) => {
+        studentsData.push({ id: doc.id, ...doc.data() } as StudentData);
+      });
+      setStudents(studentsData);
+    });
+
+    // Subscribe to resources collection
+    const unsubscribeResources = onSnapshot(resourcesRef, (snapshot) => {
+      const resourcesData: ResourceData[] = [];
+      snapshot.forEach((doc) => {
+        resourcesData.push({ id: doc.id, ...doc.data() } as ResourceData);
+      });
+      setResources(resourcesData);
+    });
+
+    fetchClassData();
+    setLoading(false);
+
+    return () => {
+      unsubscribeStudents();
+      unsubscribeResources();
+    };
+  }, [id]);
+
+  const renderStudentItem = ({ item: student }: { item: StudentData }) => (
+    <TouchableOpacity
+      key={student.id}
+      style={styles.studentCard}
+      onPress={() => router.push(`/teacher/student/${student.id}`)}
+    >
+      <View style={styles.studentRow}>
+        <View style={styles.avatar}>
+          <Text style={styles.avatarText}>
+            {student.name.split(' ').map((n) => n[0]).join('')}
+          </Text>
+        </View>
+        <View style={styles.studentInfo}>
+          <Text style={styles.studentName}>{student.name}</Text>
+          <View style={styles.progressContainer}>
+            <View style={[styles.progressBar, { width: `${student.progress}%` }]} />
+            <Text style={styles.progressText}>{student.progress}%</Text>
+          </View>
+          <Text style={styles.lastActive}>Last active: {student.lastActive}</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+
+  const renderResourceItem = ({ item }: { item: ResourceData }) => (
+    <TouchableOpacity 
+      style={styles.resourceItem}
+      onPress={() => {
+        if (item.file?.url) {
+          Linking.openURL(item.file.url);
+        }
+      }}
+    >
+      <View style={styles.resourceHeader}>
+        <MaterialIcons 
+          name={
+            item.type === 'PDF' ? 'picture-as-pdf' :
+            item.type === 'Image' ? 'image' :
+            'description'
+          } 
+          size={24} 
+          color={COLORS.text.primary} 
+         
+        />
+        <Text style={styles.resourceTitle}>{item.title}</Text>
+        <Menu
+          visible={menuVisibleMap[item.id] || false}
+          onDismiss={() => toggleMenu(item.id)}
+          anchor={
+            <TouchableOpacity 
+              style={styles.menuButton}
+              onPress={() => toggleMenu(item.id)}
+            >
+              <MaterialIcons name="more-vert" size={24} color={COLORS.text.primary} />
+            </TouchableOpacity>
+          }
+        >
+          <Menu.Item 
+            onPress={() => {
+              toggleMenu(item.id);
+              setShowEditResource(true);
+              setResourceToEdit(item);
+            }} 
+            title="Edit"
+            leadingIcon="pencil"
+          />
+          <Menu.Item 
+            onPress={() => handleDelete(item.id)}
+            title="Delete"
+            leadingIcon="delete"
+          />
+        </Menu>
+      </View>
+
+      {item.content && (
+        <Text style={styles.resourceContent} numberOfLines={3}>
+          {item.content}
+        </Text>
+      )}
+
+      <View style={styles.resourceFooter}>
+        <Text style={styles.resourceDate}>
+          {new Date(item.uploadDate).toLocaleDateString()}
+        </Text>
+        {item.file && (
+          <Text style={styles.resourceFilename}>
+            {item.file.filename}
+          </Text>
+        )}
+      </View>
+    </TouchableOpacity>
+  );
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
 
   if (!classData) {
     return (
@@ -96,53 +259,6 @@ export default function ClassDetail() {
       </View>
     );
   }
-
-  const renderStudentItem = ({ item: student } : any) => (
-    <TouchableOpacity
-      key={student.id}
-      style={styles.studentCard}
-      onPress={() => router.push(`/teacher/student/${student.id}`)}
-    >
-      <View style={styles.studentRow}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>
-            {student.name.split(' ').map((n: string[]) => n[0]).join('')}
-          </Text>
-        </View>
-        <View style={styles.studentInfo}>
-          <Text style={styles.studentName}>{student.name}</Text>
-          <View style={styles.progressContainer}>
-            <View style={[styles.progressBar, { width: `${student.progress}%` }]} />
-            <Text style={styles.progressText}>{student.progress}%</Text>
-          </View>
-          <Text style={styles.lastActive}>Last active: {student.lastActive}</Text>
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
-
-  const renderResourceItem = ({ item } :any) => (
-    <TouchableOpacity style={styles.resourceCard}>
-      <View style={styles.resourceRow}>
-        <MaterialCommunityIcons
-          name={
-            item.type === 'PDF' ? 'file-pdf-box' :
-            item.type === 'Quiz' ? 'clipboard-text' :
-            item.type === 'PowerPoint' ? 'microsoft-powerpoint' :
-            'clipboard-text'
-          }
-          size={32}
-          color={COLORS.primary}
-        />
-        <View style={styles.resourceInfo}>
-          <Text style={styles.resourceName}>{item.name}</Text>
-          <Text style={styles.resourceMeta}>
-            {item.type} • {item.uploadDate}
-          </Text>
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
 
   return (
     <View style={styles.container}>
@@ -173,40 +289,37 @@ export default function ClassDetail() {
       <View style={styles.content}>
         {activeTab === 'students' ? (
           <>
+            <TouchableOpacity 
+              style={styles.addButton}
+              onPress={() => setShowAddStudents(true)}
+            >
+              <Ionicons name="add" size={24} color={COLORS.text.light} />
+              <Text style={styles.addButtonText}>Add Students</Text>
+            </TouchableOpacity>
             <FlatList
-              data={classData.students}
+              data={students}
               renderItem={renderStudentItem}
-              keyExtractor={(item) => item.id.toString()}
+              keyExtractor={(item) => item.id}
               contentContainerStyle={styles.listContainer}
               showsVerticalScrollIndicator={false}
             />
-            <TouchableOpacity 
-              style={styles.addButton}
-              onPress={() => setIsAddStudentModalVisible(true)}
-            >
-              <Text style={styles.addButtonText}>Add Student</Text>
-            </TouchableOpacity>
-            <AddStudentModal
-              visible={isAddStudentModalVisible}
-              onClose={() => setIsAddStudentModalVisible(false)}
-              onAddStudent={handleAddStudent}
-            />
+          
           </>
         ) : (
           <>
             <TouchableOpacity 
               style={styles.addButton}
-              onPress={() => setIsAddResourceModalVisible(true)}
+              onPress={() => setShowAddResource(true)}
+            
             >
               <Ionicons name="add" size={24} color={COLORS.text.light} />
               <Text style={styles.addButtonText}>Add Resource</Text>
             </TouchableOpacity>
             <FlatList
-              data={classData.resources}
+              data={resources}
               renderItem={renderResourceItem}
-              keyExtractor={(item) => item.id.toString()}
-              contentContainerStyle={styles.listContainer}
-              showsVerticalScrollIndicator={false}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={styles.resourceList}
             />
             <AddResourceModal
               visible={isAddResourceModalVisible}
@@ -216,6 +329,23 @@ export default function ClassDetail() {
           </>
         )}
       </View>
+
+      <AddStudentsModal
+        visible={showAddStudents}
+        onClose={() => setShowAddStudents(false)}
+        classId={id as string}
+      />
+
+      <AddResourceModal
+        visible={showAddResource || showEditResource}
+        onClose={() => {
+          setShowAddResource(false);
+          setShowEditResource(false);
+          setResourceToEdit(undefined);
+        }}
+        classId={id as string}
+        resourceToEdit={resourceToEdit}
+      />
     </View>
   );
 }
@@ -333,44 +463,60 @@ const styles = StyleSheet.create({
   addButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
     backgroundColor: COLORS.primary,
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 15,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginBottom: 16,
+    alignSelf: 'flex-start',
   },
   addButtonText: {
     color: COLORS.text.light,
-    fontSize: 16,
-    fontWeight: '600',
     marginLeft: 8,
+    fontWeight: '500',
   },
-  resourceCard: {
-    backgroundColor: COLORS.card.primary,
-    borderRadius: 16,
-    padding: 15,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+  resourceList: {
+    padding: 16,
   },
-  resourceRow: {
+  resourceItem: {
+    backgroundColor: COLORS.card.secondary,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+  resourceHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 8,
   },
-  resourceInfo: {
-    flex: 1,
-    marginLeft: 15,
-  },
-  resourceName: {
-    fontSize: 16,
+  resourceTitle: {
+    fontSize: 18,
     fontWeight: '600',
     color: COLORS.text.primary,
-    marginBottom: 4,
+    marginLeft: 12,
+    flex: 1,
   },
-  resourceMeta: {
-    fontSize: 14,
+  resourceContent: {
     color: COLORS.text.secondary,
+    fontSize: 14,
+    marginBottom: 12,
+  },
+  resourceFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  resourceDate: {
+    color: COLORS.text.secondary,
+    fontSize: 12,
+  },
+  resourceFilename: {
+    color: COLORS.text.secondary,
+    fontSize: 12,
+    fontStyle: 'italic',
+  },
+  menuButton: {
+    padding: 8,
+    marginLeft: 'auto',
   },
 });

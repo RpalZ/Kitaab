@@ -5,12 +5,13 @@ import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Text, TextInput, TouchableOpacity, View } from "react-native";
 import { authStyles as styles } from "../styles/components/auth.styles";
+import { AuthUtils } from '../utils/auth';
 import { secureStorage } from "../utils/secureStorage";
 
 import {
-  createUserWithEmailAndPassword,
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    onAuthStateChanged,
+    signInWithEmailAndPassword,
 } from "firebase/auth";
 import { COLORS } from "../styles/theme";
 
@@ -58,11 +59,16 @@ export default function StudentLogin() {
         email,
         password
       );
-      console.log(response);
-      alert("check email");
+
+      // Immediately create user profile with student role after signup
+      await AuthUtils.createUserProfile(response.user.uid, email, 'student');
+      
+      console.log('Student account created:', response.user.email);
+      router.replace('/student/dashboard');
+
     } catch (error: any) {
-      console.log(error);
-      alert(`Sign in Failed: ${error.message}`);
+      console.error('Sign up failed:', error);
+      alert(`Sign up Failed: ${error.message}`);
     } finally {
       setLoading(false);
     }

@@ -4,8 +4,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useRouter } from "expo-router";
 import {
   createUserWithEmailAndPassword,
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
+  onAuthStateChanged
 } from "firebase/auth";
 import { useEffect, useState } from "react";
 import {
@@ -17,6 +16,7 @@ import {
 } from "react-native";
 import { authStyles as styles } from "../styles/components/auth.styles";
 import { COLORS } from "../styles/theme";
+import { AuthUtils } from '../utils/auth';
 import { secureStorage } from '../utils/secureStorage';
 
 const Stack = createNativeStackNavigator();
@@ -41,17 +41,15 @@ export default function TeacherLogin() {
   const signIn = async () => {
     setLoading(true);
     try {
-      const response = await signInWithEmailAndPassword(auth, email, password);
-      const token = await response.user.getIdToken();
-      await secureStorage.setItem('userToken', token);
-      
-      console.log(response);
-      alert("Successful signin");
-      router.push("/teacher/dashboard");
-
-    } catch (error:any) {
-      console.log(error);
-      alert(`Sign in Failed: ${error.message}`);
+      await AuthUtils.signInWithRole(email, password, 'teacher');
+      const token = await FIREBASE_AUTH.currentUser?.getIdToken();
+      if (token) {
+        await secureStorage.setItem('userToken', token);
+        router.replace('/teacher/dashboard');
+      }
+    } catch (error: any) {
+      console.error('Sign in failed:', error);
+      alert(error.message);
     } finally {
       setLoading(false);
     }
@@ -65,12 +63,16 @@ export default function TeacherLogin() {
         email,
         password
       );
-      console.log(response);
-      alert("check email");
 
-    } catch (error:any) {
-      console.log(error);
-      alert(`Sign in Failed: ${error.message}`);
+      // Immediately create user profile with teacher role after signup
+      await AuthUtils.createUserProfile(response.user.uid, email, 'teacher');
+      
+      console.log('Teacher account created:', response.user.email);
+      router.replace('/teacher/dashboard');
+
+    } catch (error: any) {
+      console.error('Sign up failed:', error);
+      alert(`Sign up Failed: ${error.message}`);
     } finally {
       setLoading(false);
     }
