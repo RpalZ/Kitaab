@@ -1,6 +1,4 @@
-
 import { db, FIREBASE_AUTH, storage } from '@/FirebaseConfig';
-
 import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS } from 'app/styles/theme';
 import * as DocumentPicker from 'expo-document-picker';
@@ -8,7 +6,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { collection, doc, increment, writeBatch } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { useEffect, useState } from 'react';
-import { Keyboard, Modal, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
+import { Keyboard, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 
 interface ResourceData {
@@ -221,94 +219,102 @@ export function AddResourceModal({ visible, onClose, classId, resourceToEdit }: 
       visible={visible}
       onRequestClose={onClose}
     >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            <Text style={styles.modalTitle}>Add Resource</Text>
-            
-            <TextInput
-              style={styles.input}
-              placeholder="Resource Title"
-              placeholderTextColor={COLORS.text.secondary}
-              value={title}
-              onChangeText={setTitle}
-            />
+      <View style={styles.centeredView}>
+        <View style={styles.modalView}>
+          <Text style={styles.modalTitle}>Add Resource</Text>
+          
+          <TextInput
+            style={styles.input}
+            placeholder="Resource Title"
+            placeholderTextColor={COLORS.text.secondary}
+            value={title}
+            onChangeText={setTitle}
+          />
 
-            <TextInput
-              style={[styles.input, styles.contentInput]}
-              placeholder="Content (optional)"
-              placeholderTextColor={COLORS.text.secondary}
-              value={content}
-              onChangeText={setContent}
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-            />
+          <TextInput
+            style={[styles.input, styles.contentInput]}
+            placeholder="Content (optional)"
+            placeholderTextColor={COLORS.text.secondary}
+            value={content}
+            onChangeText={setContent}
+            multiline
+            numberOfLines={4}
+            textAlignVertical="top"
+          />
 
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity 
-                style={styles.pickButton}
-                onPress={pickDocument}
-                disabled={uploading}
-              >
-                <MaterialIcons name="file-upload" size={24} color={COLORS.text.light} />
-                <Text style={styles.buttonText}>Document</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={styles.pickButton}
-                onPress={pickImage}
-                disabled={uploading}
-              >
-                <MaterialIcons name="photo" size={24} color={COLORS.text.light} />
-                <Text style={styles.buttonText}>Image</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={styles.pickButton}
-                onPress={pickVideo}
-                disabled={uploading}
-              >
-                <MaterialIcons name="videocam" size={24} color={COLORS.text.light} />
-                <Text style={styles.buttonText}>Video</Text>
-              </TouchableOpacity>
-            </View>
-
-            {selectedFile && (
-              <View style={styles.filePreview}>
-                <Text style={styles.filePreviewText} numberOfLines={1}>
-                  Selected: {selectedFile.name}
-                </Text>
-                <TouchableOpacity 
-                  onPress={() => setSelectedFile(null)}
-                  style={styles.removeFileButton}
-                >
-                  <MaterialIcons name="close" size={20} color={COLORS.error} />
-                </TouchableOpacity>
-              </View>
-            )}
-
-            {uploading ? (
-              <Text style={styles.uploadingText}>Uploading...</Text>
-            ) : (
-              <TouchableOpacity
-                style={styles.submitButton}
-                onPress={handleSubmit}
-              >
-                <Text style={styles.submitButtonText}>Add Resource</Text>
-              </TouchableOpacity>
-            )}
-
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={onClose}
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity 
+              style={styles.pickButton}
+              onPress={pickDocument}
               disabled={uploading}
             >
-              <Text style={styles.closeButtonText}>Cancel</Text>
+              <MaterialIcons name="file-upload" size={24} color={COLORS.text.light} />
+              <Text style={styles.buttonText}>Document</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.pickButton}
+              onPress={pickImage}
+              disabled={uploading}
+            >
+              <MaterialIcons name="photo" size={24} color={COLORS.text.light} />
+              <Text style={styles.buttonText}>Image</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.pickButton}
+              onPress={pickVideo}
+              disabled={uploading}
+            >
+              <MaterialIcons name="videocam" size={24} color={COLORS.text.light} />
+              <Text style={styles.buttonText}>Video</Text>
             </TouchableOpacity>
           </View>
+
+          {selectedFile && (
+            <View style={styles.filePreview}>
+              <Text style={styles.filePreviewText} numberOfLines={1}>
+                Selected: {selectedFile.name}
+              </Text>
+              <TouchableOpacity 
+                onPress={() => setSelectedFile(null)}
+                style={styles.removeFileButton}
+              >
+                <MaterialIcons name="close" size={20} color={COLORS.error} />
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {uploading ? (
+            <Text style={styles.uploadingText}>Uploading...</Text>
+          ) : (
+            <TouchableOpacity
+              style={styles.submitButton}
+              onPress={handleSubmit}
+            >
+              <Text style={styles.submitButtonText}>Add Resource</Text>
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={onClose}
+            disabled={uploading}
+          >
+            <Text style={styles.closeButtonText}>Cancel</Text>
+          </TouchableOpacity>
         </View>
-      </TouchableWithoutFeedback>
+
+        {/* Add a touchable backdrop to dismiss keyboard and modal */}
+        <TouchableOpacity 
+          style={styles.modalBackdrop} 
+          activeOpacity={1} 
+          onPress={() => {
+            Keyboard.dismiss();
+            onClose();
+          }}
+        />
+      </View>
     </Modal>
   );
 }
@@ -421,5 +427,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-}); 
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,  // This will make the backdrop fill the entire screen
+    zIndex: -1,  // This ensures the backdrop stays behind the modal content
+  },
+});
+; 
 
