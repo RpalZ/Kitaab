@@ -321,11 +321,6 @@ export default function ClassDetail() {
               keyExtractor={(item) => item.id}
               contentContainerStyle={styles.resourceList}
             />
-            <AddResourceModal
-              visible={isAddResourceModalVisible}
-              onClose={() => setIsAddResourceModalVisible(false)}
-              onAddResource={handleAddResource}
-            />
           </>
         )}
       </View>
