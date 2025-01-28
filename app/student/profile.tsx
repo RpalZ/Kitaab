@@ -3,7 +3,7 @@ import { useRouter } from "expo-router";
 import { signOut } from "firebase/auth";
 import { useState } from "react";
 import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
-import { SignOutModal } from "../components/profile/SignOutModal";
+import { SignOutModal } from "../components/SignOutModal";
 import { TeacherTabs } from "../components/TeacherTabs";
 import { profileStyles as styles } from "../styles/components/profile.styles";
 import { secureStorage } from "../utils/secureStorage";
