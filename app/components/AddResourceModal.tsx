@@ -1,4 +1,3 @@
-
 import { db, storage } from '@/FirebaseConfig';
 import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS } from 'app/styles/theme';
@@ -164,7 +163,6 @@ export function AddResourceModal({ visible, onClose, classId, resourceToEdit }: 
     } finally {
       setUploading(false);
     }
-
   };
 
   return (
@@ -259,7 +257,6 @@ export function AddResourceModal({ visible, onClose, classId, resourceToEdit }: 
 
 const styles = StyleSheet.create({
   centeredView: {
-     
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
@@ -291,7 +288,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     color: COLORS.text.primary,
- 
     marginBottom: 20,
   },
   buttonContainer: {
@@ -365,4 +361,3 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 }); 
-

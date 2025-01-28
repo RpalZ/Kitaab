@@ -81,8 +81,6 @@ export default function Home() {
           console.error('Error checking user role:', error);
           await FIREBASE_AUTH.signOut();
           await secureStorage.removeItem('userToken');
-      
-       
         }
       }
     });
