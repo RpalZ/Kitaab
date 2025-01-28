@@ -1,10 +1,11 @@
 
-import { db, storage } from '@/FirebaseConfig';
+import { db, FIREBASE_AUTH, storage } from '@/FirebaseConfig';
+
 import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS } from 'app/styles/theme';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
-import { addDoc, collection, doc, increment, updateDoc, writeBatch } from 'firebase/firestore';
+import { collection, doc, increment, writeBatch } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { useEffect, useState } from 'react';
 import { Keyboard, Modal, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
@@ -14,11 +15,11 @@ interface ResourceData {
   id: string;
   title: string;
   content?: string;
-  type: 'PDF' | 'Image' | 'Note';
+  type: 'PDF' | 'Image' | 'Video' | 'Note';
   file?: {
     url: string;
     filename: string;
-    type: 'PDF' | 'Image';
+    type: 'PDF' | 'Image' | 'Video';
   };
   uploadDate: string;
 }
@@ -49,7 +50,8 @@ export function AddResourceModal({ visible, onClose, classId, resourceToEdit }: 
         setSelectedFile({
           uri: resourceToEdit.file.url,
           name: resourceToEdit.file.filename,
-          type: resourceToEdit.file.type === 'PDF' ? 'application/pdf' : 'image/jpeg'
+          type: resourceToEdit.file.type === 'PDF' ? 'application/pdf' :
+                resourceToEdit.file.type === 'Image' ? 'image/jpeg' : 'video/mp4'
         });
       }
     }
@@ -103,9 +105,36 @@ export function AddResourceModal({ visible, onClose, classId, resourceToEdit }: 
     }
   };
 
+  const pickVideo = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+        allowsEditing: true,
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        const uri = result.assets[0].uri;
+        setSelectedFile({
+          uri,
+          name: `video_${Date.now()}.mp4`,
+          type: 'video/mp4'
+        });
+      }
+    } catch (error) {
+      console.error('Error picking video:', error);
+      alert('Failed to pick video');
+    }
+  };
+
   const handleSubmit = async () => {
     if (!title.trim()) {
       alert('Please enter a title');
+      return;
+    }
+
+    if (!FIREBASE_AUTH.currentUser) {
+      alert('You must be logged in to upload resources');
       return;
     }
 
@@ -114,18 +143,31 @@ export function AddResourceModal({ visible, onClose, classId, resourceToEdit }: 
       let fileData: ResourceData['file'] | null = null;
       
       if (selectedFile) {
-        // Only upload new file if it's different from the existing one
         if (!resourceToEdit?.file || selectedFile.uri !== resourceToEdit.file.url) {
           const blob = selectedFile.blob || await (await fetch(selectedFile.uri)).blob();
           const fileRef = ref(storage, `classes/${classId}/resources/${selectedFile.name}`);
-          const uploadTask = await uploadBytes(fileRef, blob);
-          const downloadUrl = await getDownloadURL(uploadTask.ref);
           
-          fileData = {
-            url: downloadUrl,
-            filename: selectedFile.name,
-            type: selectedFile.type.includes('pdf') ? 'PDF' : 'Image'
-          };
+          try {
+            const uploadTask = await uploadBytes(fileRef, blob);
+            console.log('Upload successful:', uploadTask);
+            
+            const downloadUrl = await getDownloadURL(uploadTask.ref);
+            console.log('Download URL:', downloadUrl);
+            
+            fileData = {
+              url: downloadUrl,
+              filename: selectedFile.name,
+              type: selectedFile.type.includes('video') ? 'Video' :
+                    selectedFile.type.includes('pdf') ? 'PDF' : 'Image'
+            };
+          } catch (uploadError: any) {
+            console.error('Upload error details:', {
+              code: uploadError.code,
+              message: uploadError.message,
+              serverResponse: uploadError.serverResponse
+            });
+            throw uploadError;
+          }
         } else {
           fileData = resourceToEdit.file;
         }
@@ -143,13 +185,13 @@ export function AddResourceModal({ visible, onClose, classId, resourceToEdit }: 
       const batch = writeBatch(db);
 
       if (resourceToEdit) {
-        // Update existing resource
-        await updateDoc(doc(db, 'classes', classId, 'resources', resourceToEdit.id), resourceData);
+        batch.update(doc(db, 'classes', classId, 'resources', resourceToEdit.id), resourceData);
       } else {
-        // Add new resource and increment count
-        await addDoc(collection(db, 'classes', classId, 'resources'), resourceData);
-        await updateDoc(doc(db, 'classes', classId), {
-        resources: increment(1)})
+        const resourceRef = doc(collection(db, 'classes', classId, 'resources'));
+        batch.set(resourceRef, resourceData);
+        batch.update(doc(db, 'classes', classId), {
+          resources: increment(1)
+        });
       }
 
       await batch.commit();
@@ -159,8 +201,13 @@ export function AddResourceModal({ visible, onClose, classId, resourceToEdit }: 
       setSelectedFile(null);
       onClose();
     } catch (error: any) {
-      console.error('Error details:', error);
-      alert(`${resourceToEdit ? 'Update' : 'Upload'} failed: ${error.message}`);
+      console.error('Error details:', {
+        code: error.code,
+        message: error.message,
+        serverResponse: error.serverResponse,
+        stack: error.stack
+      });
+      alert(`${resourceToEdit ? 'Update' : 'Upload'} failed: ${error.message} | ${error.code}`);
     } finally {
       setUploading(false);
     }
@@ -205,7 +252,7 @@ export function AddResourceModal({ visible, onClose, classId, resourceToEdit }: 
                 disabled={uploading}
               >
                 <MaterialIcons name="file-upload" size={24} color={COLORS.text.light} />
-                <Text style={styles.buttonText}>Pick Document</Text>
+                <Text style={styles.buttonText}>Document</Text>
               </TouchableOpacity>
 
               <TouchableOpacity 
@@ -214,7 +261,16 @@ export function AddResourceModal({ visible, onClose, classId, resourceToEdit }: 
                 disabled={uploading}
               >
                 <MaterialIcons name="photo" size={24} color={COLORS.text.light} />
-                <Text style={styles.buttonText}>Pick Image</Text>
+                <Text style={styles.buttonText}>Image</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.pickButton}
+                onPress={pickVideo}
+                disabled={uploading}
+              >
+                <MaterialIcons name="videocam" size={24} color={COLORS.text.light} />
+                <Text style={styles.buttonText}>Video</Text>
               </TouchableOpacity>
             </View>
 
@@ -298,22 +354,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 20,
-    gap: 10,
+    gap: 8,
   },
   pickButton: {
     flex: 1,
     backgroundColor: COLORS.primary,
     borderRadius: 8,
     padding: 12,
-    flexDirection: 'row',
+    flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
+    gap: 4,
   },
   buttonText: {
     color: COLORS.text.light,
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: '500',
+    textAlign: 'center',
   },
   uploadingText: {
     color: COLORS.text.secondary,
