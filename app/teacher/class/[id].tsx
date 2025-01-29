@@ -3,7 +3,7 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { COLORS } from "app/styles/theme";
 import { useLocalSearchParams2 } from "app/utils/uselocalSearchParams2";
 import { useRouter } from "expo-router";
-import { collection, doc, getDoc, increment, onSnapshot, writeBatch } from 'firebase/firestore';
+import { collection, doc, deleteDoc, getDoc, increment, onSnapshot, writeBatch } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { Alert, FlatList, Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Menu } from 'react-native-paper';
