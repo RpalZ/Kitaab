@@ -1,4 +1,4 @@
-import { db } from '@/FirebaseConfig';
+import { db, storage } from '@/FirebaseConfig';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { COLORS } from "app/styles/theme";
 import { useLocalSearchParams2 } from "app/utils/uselocalSearchParams2";
@@ -10,6 +10,7 @@ import { Menu } from 'react-native-paper';
 import { AddResourceModal } from '../../components/AddResourceModal';
 import { AddStudentsModal } from '../../components/AddStudentsModal';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
+import { deleteObject, ref } from 'firebase/storage';
 
 interface ClassData {
   id: string;
