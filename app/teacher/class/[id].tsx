@@ -238,17 +238,27 @@ export default function ClassDetail() {
               setShowEditResource(true);
               setResourceToEdit(item);
             }} 
-            title="Edit"
-            leadingIcon="pencil"
+            title="Edit" 
           />
           <Menu.Item 
             onPress={() => {
-              console.log('Delete pressed for resource:', item.id);
-              toggleMenu(item.id);
-              handleDelete(item.id);
+              Alert.alert(
+                "Delete Resource",
+                "Are you sure you want to delete this resource?",
+                [
+                  { text: "Cancel", style: "cancel" },
+                  { 
+                    text: "Delete", 
+                    style: "destructive",
+                    onPress: () => {
+                      toggleMenu(item.id);
+                      handleDelete(item.id);
+                    }
+                  }
+                ]
+              );
             }}
-            title="Delete"
-            leadingIcon="delete"
+            title="Delete" 
           />
         </Menu>
       </View>
