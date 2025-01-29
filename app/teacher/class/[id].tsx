@@ -90,7 +90,7 @@ export default function ClassDetail() {
               if (resourceToDelete.file?.filename) {
                 console.log('Deleting file from storage:', resourceToDelete.file.filename);
                 const fileRef = ref(storage, `classes/${id}/resources/${resourceToDelete.file.filename}`);
-                await deleteObject(fileRef).catch(error => {
+                await deleteObject(fileRef).catch((error: any) => {
                   console.error('Error deleting file:', error);
                 });
               }
@@ -218,7 +218,6 @@ export default function ClassDetail() {
           } 
           size={24} 
           color={COLORS.text.primary} 
-         
         />
         <Text style={styles.resourceTitle}>{item.title}</Text>
         <Menu
@@ -243,7 +242,11 @@ export default function ClassDetail() {
             leadingIcon="pencil"
           />
           <Menu.Item 
-            onPress={() => handleDelete(item.id)}
+            onPress={() => {
+              console.log('Delete pressed for resource:', item.id);
+              toggleMenu(item.id);
+              handleDelete(item.id);
+            }}
             title="Delete"
             leadingIcon="delete"
           />
