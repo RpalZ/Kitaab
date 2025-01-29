@@ -22,7 +22,7 @@ interface ClassData {
 
 interface StudentData {
   id: string;
-  name: string;
+  name: string;s
   progress: number;
   lastActive: string;
 }
@@ -65,69 +65,38 @@ export default function ClassDetail() {
   };
 
   const handleDelete = async (resourceId: string) => {
-    Alert.alert(
-      "Delete Resource",
-      "Are you sure you want to delete this resource?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Delete", 
-          style: "destructive",
-          onPress: async () => {
-            try {
-              console.log('Starting delete process for resource:', resourceId);
-              
-              // Find the resource to get its file info
-              const resourceToDelete = resources.find(r => r.id === resourceId);
-              console.log('Resource to delete:', resourceToDelete);
-              
-              if (!resourceToDelete) {
-                console.error('Resource not found');
-                return;
-              }
+    try {
+      console.log('Starting delete process for resource:', resourceId);
+      
+      // Find the resource to get its file info
+      const resourceToDelete = resources.find(r => r.id === resourceId);
+      console.log('Resource to delete:', resourceToDelete);
+      
+      if (!resourceToDelete) {
+        console.error('Resource not found');
+        return;
+      }
 
-              // If there was a file, delete it from storage first
-              if (resourceToDelete.file?.filename) {
-                console.log('Deleting file from storage:', resourceToDelete.file.filename);
-                const fileRef = ref(storage, `classes/${id}/resources/${resourceToDelete.file.filename}`);
-                await deleteObject(fileRef).catch((error: any) => {
-                  console.error('Error deleting file:', error);
-                });
-              }
+      // Delete the resource document directly first
+      const resourceRef = doc(db, 'classes', id, 'resources', resourceId);
+      await deleteDoc(resourceRef);
+      console.log('Resource document deleted');
 
-              // Start a batch write
-              const batch = writeBatch(db);
-              console.log('Creating batch write');
+      // If there was a file, delete it from storage
+      if (resourceToDelete.file?.filename) {
+        console.log('Deleting file from storage:', resourceToDelete.file.filename);
+        const fileRef = ref(storage, `classes/${id}/resources/${resourceToDelete.file.filename}`);
+        await deleteObject(fileRef);
+        console.log('File deleted from storage');
+      }
 
-              // Delete the resource document
-              const resourceRef = doc(db, 'classes', id, 'resources', resourceId);
-              batch.delete(resourceRef);
+      console.log('Delete successful');
+      Alert.alert('Success', 'Resource deleted successfully');
 
-              // Decrement the resources count
-              const classRef = doc(db, 'classes', id);
-              batch.update(classRef, {
-                resourceCount: increment(-1)
-              });
-
-              // Commit the batch
-              console.log('Committing batch');
-              await batch.commit();
-              console.log('Delete successful');
-
-              // Close the menu
-              setMenuVisibleMap(prev => ({
-                ...prev,
-                [resourceId]: false
-              }));
-
-            } catch (error) {
-              console.error('Error in delete process:', error);
-              Alert.alert('Error', 'Failed to delete resource');
-            }
-          }
-        }
-      ]
-    );
+    } catch (error: any) {
+      console.error('Error in delete process:', error);
+      Alert.alert('Error', `Failed to delete resource: ${error.message}`);
+    }
   };
 
   useEffect(() => {
