@@ -75,25 +75,53 @@ export default function ClassDetail() {
           style: "destructive",
           onPress: async () => {
             try {
+              console.log('Starting delete process for resource:', resourceId);
+              
+              // Find the resource to get its file info
+              const resourceToDelete = resources.find(r => r.id === resourceId);
+              console.log('Resource to delete:', resourceToDelete);
+              
+              if (!resourceToDelete) {
+                console.error('Resource not found');
+                return;
+              }
+
+              // If there was a file, delete it from storage first
+              if (resourceToDelete.file?.filename) {
+                console.log('Deleting file from storage:', resourceToDelete.file.filename);
+                const fileRef = ref(storage, `classes/${id}/resources/${resourceToDelete.file.filename}`);
+                await deleteObject(fileRef).catch(error => {
+                  console.error('Error deleting file:', error);
+                });
+              }
+
               // Start a batch write
               const batch = writeBatch(db);
+              console.log('Creating batch write');
 
-              // Delete the resource
-              batch.delete(doc(db, 'classes', id, 'resources', resourceId));
+              // Delete the resource document
+              const resourceRef = doc(db, 'classes', id, 'resources', resourceId);
+              batch.delete(resourceRef);
 
               // Decrement the resources count
-              batch.update(doc(db, 'classes', id), {
-                resources: increment(-1)
+              const classRef = doc(db, 'classes', id);
+              batch.update(classRef, {
+                resourceCount: increment(-1)
               });
 
+              // Commit the batch
+              console.log('Committing batch');
               await batch.commit();
+              console.log('Delete successful');
 
+              // Close the menu
               setMenuVisibleMap(prev => ({
                 ...prev,
                 [resourceId]: false
               }));
+
             } catch (error) {
-              console.error('Error deleting resource:', error);
+              console.error('Error in delete process:', error);
               Alert.alert('Error', 'Failed to delete resource');
             }
           }
