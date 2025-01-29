@@ -10,7 +10,7 @@ import { Menu } from 'react-native-paper';
 import { AddResourceModal } from '../../components/AddResourceModal';
 import { AddStudentsModal } from '../../components/AddStudentsModal';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
-import { deleteObject, ref } from 'firebase/storage';
+import { ref, deleteObject } from '@firebase/storage';
 
 interface ClassData {
   id: string;
@@ -22,7 +22,7 @@ interface ClassData {
 
 interface StudentData {
   id: string;
-  name: string;s
+  name: string;
   progress: number;
   lastActive: string;
 }
