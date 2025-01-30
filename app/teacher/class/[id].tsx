@@ -5,10 +5,11 @@ import { useLocalSearchParams2 } from "app/utils/uselocalSearchParams2";
 import { useRouter } from "expo-router";
 import { collection, doc, getDoc, increment, onSnapshot, writeBatch } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
-import { Alert, FlatList, Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { FlatList, Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Menu } from 'react-native-paper';
 import { AddResourceModal } from '../../components/AddResourceModal';
 import { AddStudentsModal } from '../../components/AddStudentsModal';
+import { AlertDialog } from '../../components/AlertDialog';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 
 interface ClassData {
@@ -54,6 +55,10 @@ export default function ClassDetail() {
   const [showEditResource, setShowEditResource] = useState(false);
   const [resourceToEdit, setResourceToEdit] = useState<ResourceData | undefined>(undefined);
   const [menuVisibleMap, setMenuVisibleMap] = useState<{ [key: string]: boolean }>({});
+  const [deleteAlert, setDeleteAlert] = useState({
+    visible: false,
+    resourceId: ''
+  });
  
 
   const toggleMenu = (resourceId: string) => {
@@ -64,41 +69,31 @@ export default function ClassDetail() {
   };
 
   const handleDelete = async (resourceId: string) => {
-    Alert.alert(
-      "Delete Resource",
-      "Are you sure you want to delete this resource?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Delete", 
-          style: "destructive",
-          onPress: async () => {
-            try {
-              // Start a batch write
-              const batch = writeBatch(db);
+    setDeleteAlert({
+      visible: true,
+      resourceId
+    });
+  };
 
-              // Delete the resource
-              batch.delete(doc(db, 'classes', id, 'resources', resourceId));
+  const confirmDelete = async () => {
+    try {
+      const batch = writeBatch(db);
+      batch.delete(doc(db, 'classes', id, 'resources', deleteAlert.resourceId));
+      batch.update(doc(db, 'classes', id), {
+        resources: increment(-1)
+      });
+      await batch.commit();
 
-              // Decrement the resources count
-              batch.update(doc(db, 'classes', id), {
-                resources: increment(-1)
-              });
-
-              await batch.commit();
-
-              setMenuVisibleMap(prev => ({
-                ...prev,
-                [resourceId]: false
-              }));
-            } catch (error) {
-              console.error('Error deleting resource:', error);
-              Alert.alert('Error', 'Failed to delete resource');
-            }
-          }
-        }
-      ]
-    );
+      setMenuVisibleMap(prev => ({
+        ...prev,
+        [deleteAlert.resourceId]: false
+      }));
+    } catch (error) {
+      console.error('Error deleting resource:', error);
+      alert('Failed to delete resource');
+    } finally {
+      setDeleteAlert({ visible: false, resourceId: '' });
+    }
   };
 
   useEffect(() => {
@@ -341,6 +336,14 @@ export default function ClassDetail() {
         }}
         classId={id as string}
         resourceToEdit={resourceToEdit}
+      />
+
+      <AlertDialog
+        visible={deleteAlert.visible}
+        title="Delete Resource"
+        message="Are you sure you want to delete this resource?"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteAlert({ visible: false, resourceId: '' })}
       />
     </View>
   );
