@@ -42,3 +42,4 @@ app-example
 # Add these lines
 .env
 .env.*
+storage.rules
