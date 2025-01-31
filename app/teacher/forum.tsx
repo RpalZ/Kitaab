@@ -15,7 +15,7 @@ import { dashboardStyles as styles } from "../styles/components/forum.styles";
 import { db, storage } from "../../FirebaseConfig";
 import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, updateDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, getStorage} from "firebase/storage";
-import * as FileSystem from 'expo-file-system';
+import * as WebBrowser from 'expo-web-browser';
 import { Platform } from 'react-native';
 
 type Resource = { 
@@ -175,51 +175,24 @@ export default function TeacherForum() {
   };  
 
   const downloadFile = async (fileUri: string, fileName: string) => {
-    try {
       if (Platform.OS === 'web') {
-        console.log("Using the following fileUri:",fileUri);
-        // Get storage reference from URL
-        const response = await fetch(fileUri);
-        if (!response.ok) throw new Error("Failed to fetch file");
-  
-        const blob = await response.blob();
-  
-        // Create a download link
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = fileName;
-  
-        // Trigger download
-        document.body.appendChild(link);
-        link.click();
-        
-        // Cleanup
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        try {
+          // Had to resort to opening windows due to CORS issue blocking downloads
+          window.open(fileUri, '_blank');
+        } catch (error) {
+          console.error('Download failed:', error);
+          throw error;
+        }
         
         }
       else {
-        const fileUriLocal = FileSystem.documentDirectory + fileName;
-        const fileInfo = await FileSystem.getInfoAsync(fileUriLocal);
-        if (fileInfo.exists) {
-            alert('File already exists');
+        try {
+          await WebBrowser.openBrowserAsync(fileUri);
+        } catch (error) {
+          console.error('Error opening file:', error);
         }
-        const downloadResumable = FileSystem.createDownloadResumable(
-          fileUri,
-          fileUriLocal,
-          {},
-          (downloadProgress) => {
-            const progress = downloadProgress.totalBytesWritten / downloadProgress.totalBytesExpectedToWrite;
-          }
-        );
-    
-        console.log(`Download complete: ${fileUriLocal}`);
       }
-    } catch (error) {
-      console.error("Error downloading file:", error);
-      alert(`error: ${error}`);
-    }
+    
   };
 
   const deleteResource = (index: number) => {
