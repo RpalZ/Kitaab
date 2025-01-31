@@ -58,7 +58,7 @@ export default function StudentDashboard() {
       const userData = userDoc.data();
       const classIds = userData?.classIds || [];
 
-<!-- <<<<<<< studentDatabaseImplementation -->
+
       let totalResourceCount = 0;
       let totalAssignmentCount = 0;
       const classPromises = classIds.map(async (classId: string) => {
