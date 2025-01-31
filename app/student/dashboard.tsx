@@ -1,25 +1,73 @@
+import { db, FIREBASE_AUTH } from "@/FirebaseConfig";
 import { useRouter } from "expo-router";
-import { useState , useEffect} from "react";
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { useEffect, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { StudentTabs } from "../components/StudentTabs";
 import { dashboardStyles as styles } from "../styles/components/dashboard.styles";
-import { FIREBASE_AUTH } from "@/FirebaseConfig";
 
+interface ClassSummary {
+  id: string;
+  name: string;
+  teacherName: string;
+  newResources: number;
+  subject: string;
+}
 
 export default function StudentDashboard() {
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState("");
+  const [classes, setClasses] = useState<ClassSummary[]>([]);
+  const [recentResources, setRecentResources] = useState<any[]>([]);
 
   useEffect(() => {
     const user = FIREBASE_AUTH.currentUser;
     if (!user) return;
+
     setUserEmail(user.email);
     setDisplayName(user.displayName || user.email?.split("@")[0] || "Student");
+
+    // Fetch user's profile to get classIds
+    const userRef = doc(db, 'users', user.uid);
+    const unsubscribeUser = onSnapshot(userRef, async (userDoc) => {
+      const userData = userDoc.data();
+      const classIds = userData?.classIds || [];
+
+      // Fetch details for each class
+      const classPromises = classIds.map(async (classId:any) => {
+        const classDoc = await getDoc(doc(db, 'classes', classId));
+        const classData = classDoc.data();
+        
+        // Get teacher's name
+        const teacherDoc = await getDoc(doc(db, 'users', classData?.teacherId));
+        const teacherData = teacherDoc.data();
+
+        return {
+          id: classId,
+          name: classData?.name || '',
+          teacherName: teacherData?.displayName || teacherData?.email?.split('@')[0] || 'Teacher',
+          subject: classData?.subject || '',
+          newResources: 0, // You can implement a counter for new resources
+        };
+      });
+
+      const classesData = await Promise.all(classPromises);
+      setClasses(classesData);
+      setLoading(false);
+    });
+
+    return () => unsubscribeUser();
   }, []);
-    
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
   return (
     <ProtectedRoute requiredRole="student">
       <View style={styles.container}>
@@ -30,7 +78,7 @@ export default function StudentDashboard() {
 
           <View style={styles.statsContainer}>
             <View style={styles.statBox}>
-              <Text style={styles.statNumber}>4</Text>
+              <Text style={styles.statNumber}>{classes.length}</Text>
               <Text style={styles.statLabel}>Classes</Text>
             </View>
             <View style={styles.statBox}>
@@ -45,17 +93,18 @@ export default function StudentDashboard() {
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Your Classes</Text>
-            {[
-              "Mathematics 101",
-              "Physics Basic",
-              "Chemistry Lab",
-              "English Literature",
-            ].map((className, index) => (
-              <TouchableOpacity key={index} style={styles.card}>
-                <Text style={styles.className}>{className}</Text>
+            {classes.map((classItem) => (
+              <TouchableOpacity 
+                key={classItem.id} 
+                style={styles.card}
+                onPress={() => router.push(`/student/class/${classItem.id}`)}
+              >
+                <Text style={styles.className}>{classItem.name}</Text>
                 <View style={styles.classDetails}>
-                  <Text style={styles.classInfo}>2 new resources</Text>
-                  <Text style={styles.classTeacher}>Mr. Smith</Text>
+                  <Text style={styles.classInfo}>
+                    {classItem.newResources > 0 ? `${classItem.newResources} new resources` : 'No new resources'}
+                  </Text>
+                  <Text style={styles.classTeacher}>{classItem.teacherName}</Text>
                 </View>
               </TouchableOpacity>
             ))}

@@ -1,12 +1,12 @@
 import { FIREBASE_AUTH, db } from "@/FirebaseConfig";
 import { useRouter } from "expo-router";
 import {
-  addDoc,
-  collection,
-  onSnapshot,
-  query,
-  serverTimestamp,
-  where,
+    addDoc,
+    collection,
+    onSnapshot,
+    query,
+    serverTimestamp,
+    where,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
