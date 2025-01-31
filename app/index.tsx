@@ -11,45 +11,62 @@ import { secureStorage } from './utils/secureStorage';
 
 export default function Home() {
   const router = useRouter();
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(false);
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const fallAnim = useRef(new Animated.Value(-200)).current;
-  const swingAnim = useRef(new Animated.Value(0)).current;
 
-  const handleAnimationComplete = () => {
+  useEffect(() => {
     Animated.sequence([
       Animated.spring(fallAnim, {
         toValue: 0,
-        tension: 50,
-        friction: 4,
+        tension: 30,
+        friction: 5,
         useNativeDriver: true,
       }),
       Animated.sequence([
         Animated.timing(fadeAnim, {
           toValue: 0.3,
-          duration: 50,
+          duration: 100,
           useNativeDriver: true,
         }),
         Animated.timing(fadeAnim, {
           toValue: 1,
-          duration: 50,
+          duration: 100,
           useNativeDriver: true,
         }),
         Animated.timing(fadeAnim, {
           toValue: 0.5,
-          duration: 40,
+          duration: 80,
           useNativeDriver: true,
         }),
         Animated.timing(fadeAnim, {
           toValue: 1,
-          duration: 40,
+          duration: 80,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 0.2,
+          duration: 60,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 60,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 0.4,
+          duration: 50,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 50,
           useNativeDriver: true,
         }),
       ]),
-    ]).start(() => {
-      setShowSplash(false);
-    });
-  };
+    ]).start();
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, async (user) => {
@@ -78,11 +95,6 @@ export default function Home() {
 
   return (
     <View style={styles.container}>
-      {showSplash && (
-        <SplashScreen
-          onAnimationComplete={handleAnimationComplete}
-        />
-      )}
       <View style={styles.header}>
         <Animated.View 
           style={[
