@@ -12,7 +12,7 @@ import { secureStorage } from './utils/secureStorage';
 export default function Home() {
   const router = useRouter();
   const [showSplash, setShowSplash] = useState(true);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(1)).current;
   const fallAnim = useRef(new Animated.Value(-200)).current;
   const swingAnim = useRef(new Animated.Value(0)).current;
 
@@ -25,32 +25,6 @@ export default function Home() {
         useNativeDriver: true,
       }),
       Animated.sequence([
-        Animated.timing(swingAnim, {
-          toValue: 0.1,
-          duration: 200,
-          useNativeDriver: true,
-          easing: Easing.inOut(Easing.quad),
-        }),
-        Animated.timing(swingAnim, {
-          toValue: -0.1,
-          duration: 400,
-          useNativeDriver: true,
-          easing: Easing.inOut(Easing.quad),
-        }),
-        Animated.timing(swingAnim, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: true,
-          easing: Easing.inOut(Easing.quad),
-        }),
-      ]),
-      Animated.sequence([
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-          easing: Easing.inOut(Easing.cubic),
-        }),
         Animated.timing(fadeAnim, {
           toValue: 0.3,
           duration: 50,
@@ -69,16 +43,6 @@ export default function Home() {
         Animated.timing(fadeAnim, {
           toValue: 1,
           duration: 40,
-          useNativeDriver: true,
-        }),
-        Animated.timing(fadeAnim, {
-          toValue: 0.8,
-          duration: 30,
-          useNativeDriver: true,
-        }),
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 30,
           useNativeDriver: true,
         }),
       ]),
@@ -125,13 +89,7 @@ export default function Home() {
             { 
               opacity: fadeAnim,
               transform: [
-                { translateY: fallAnim },
-                {
-                  rotate: swingAnim.interpolate({
-                    inputRange: [-1, 1],
-                    outputRange: ['-20deg', '20deg']
-                  })
-                }
+                { translateY: fallAnim }
               ]
             }
           ]}
