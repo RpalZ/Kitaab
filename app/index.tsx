@@ -14,6 +14,7 @@ export default function Home() {
   const [showSplash, setShowSplash] = useState(false);
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const fallAnim = useRef(new Animated.Value(-200)).current;
+  const buttonsFadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.sequence([
@@ -23,7 +24,6 @@ export default function Home() {
         friction: 6,
         useNativeDriver: true,
       }),
-      Animated.delay(300),
       Animated.sequence([
         Animated.timing(fadeAnim, {
           toValue: 0.3,
@@ -55,17 +55,12 @@ export default function Home() {
           duration: 30,
           useNativeDriver: true,
         }),
-        Animated.timing(fadeAnim, {
-          toValue: 0.4,
-          duration: 25,
-          useNativeDriver: true,
-        }),
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 25,
-          useNativeDriver: true,
-        }),
       ]),
+      Animated.timing(buttonsFadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
     ]).start();
   }, []);
 
@@ -113,11 +108,28 @@ export default function Home() {
             resizeMode="contain"
           />
         </Animated.View>
-        <Text style={styles.title}>Kitaab</Text>
-        <Text style={styles.subtitle}>Choose your role to get started</Text>
+        <Animated.Text style={[styles.title, { opacity: buttonsFadeAnim }]}>
+          Kitaab
+        </Animated.Text>
+        <Animated.Text style={[styles.subtitle, { opacity: buttonsFadeAnim }]}>
+          Choose your role to get started
+        </Animated.Text>
       </View>
 
-      <View style={styles.buttonContainer}>
+      <Animated.View 
+        style={[
+          styles.buttonContainer,
+          {
+            opacity: buttonsFadeAnim,
+            transform: [{
+              translateY: buttonsFadeAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [20, 0],
+              })
+            }]
+          }
+        ]}
+      >
         <TouchableOpacity
           style={[styles.button, { backgroundColor: COLORS.primary }]}
           onPress={() => router.push("/teacher/login")}
@@ -131,7 +143,7 @@ export default function Home() {
         >
           <Text style={styles.buttonText}>I'm a Student</Text>
         </TouchableOpacity>
-      </View>
+      </Animated.View>
     </View>
   );
 }
