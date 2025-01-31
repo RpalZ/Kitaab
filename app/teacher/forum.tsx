@@ -12,15 +12,16 @@ import {
 } from "react-native";
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { TeacherTabs } from "../components/TeacherTabs";
-import { dashboardStyles as styles } from "../styles/components/forum.styles";
+import { dashboardStyles } from "../styles/components/forum.styles";
 import { db, storage } from "../../FirebaseConfig";
 import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, updateDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, getStorage} from "firebase/storage";
 import * as WebBrowser from 'expo-web-browser';
 import { Platform } from 'react-native';
-import { COLORS } from "../styles/colors";
+import { COLORS } from "../styles/theme";
 
-type Resource = { 
+type Resource = {
+  createdAt: any; 
   id?:string;
   title: string;
   description: string;
@@ -69,6 +70,7 @@ export default function TeacherForum() {
       const resource: Resource = {
         title: title.trim(),
         description: desc.trim(),
+        createdAt: undefined
       };
       const docRef = await addDoc(collection(db, "posts"), {
         ...resource,
@@ -167,6 +169,7 @@ export default function TeacherForum() {
           title: data.title,
           description: data.description,
           file: fileData,
+          createdAt: data.createdAt,
         };
       }));
   
@@ -219,11 +222,11 @@ export default function TeacherForum() {
 
   return (
     <ProtectedRoute requiredRole="teacher">
-      <View style={styles.container}>
-        <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color={COLORS.primary} style={styles.searchIcon} />
+      <View style={localStyles.container}>
+        <View style={localStyles.searchContainer}>
+          <Ionicons name="search" size={20} color={COLORS.primary} style={localStyles.searchIcon} />
           <TextInput
-            style={styles.searchInput}
+            style={localStyles.searchInput}
             placeholder="Search resources..."
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -236,11 +239,11 @@ export default function TeacherForum() {
           )}
         </View>
 
-        <ScrollView style={styles.scrollContainer}>
+        <ScrollView style={localStyles.scrollContainer}>
           {filteredResources.length === 0 ? (
-            <View style={styles.emptyStateContainer}>
+            <View style={localStyles.emptyStateContainer}>
               <Ionicons name="document-outline" size={48} color={COLORS.text.secondary} />
-              <Text style={styles.emptyStateText}>
+              <Text style={localStyles.emptyStateText}>
                 {searchQuery.length > 0 
                   ? "No resources found matching your search"
                   : "No resources available yet"}
@@ -250,20 +253,20 @@ export default function TeacherForum() {
             filteredResources.map((resource, index) => (
               <TouchableOpacity
                 key={index}
-                style={styles.resourceButton}
+                style={localStyles.resourceButton}
                 onPress={() =>
                   downloadFile(resource.file?.uri || "", resource.file?.name || "")
                 }
               >
-                <Text style={styles.titleTextStyle}>{resource.title}</Text>
-                <Text style={styles.textStyle}>{resource.description}</Text>
+                <Text style={localStyles.titleTextStyle}>{resource.title}</Text>
+                <Text style={localStyles.textStyle}>{resource.description}</Text>
                 {resource.file && (
-                  <View style={styles.fileContainer}>
+                  <View style={localStyles.fileContainer}>
                     <Ionicons name="document-outline" size={20} color={COLORS.primary} />
-                    <Text style={styles.fileNameText}>{resource.file.name}</Text>
+                    <Text style={localStyles.fileNameText}>{resource.file.name}</Text>
                   </View>
                 )}
-                <Text style={styles.dateText}>
+                <Text style={localStyles.dateText}>
                   {resource.createdAt?.toDate().toLocaleDateString() || ''}
                 </Text>
               </TouchableOpacity>
@@ -272,7 +275,7 @@ export default function TeacherForum() {
         </ScrollView>
 
         <TouchableOpacity
-          style={styles.addButton}
+          style={localStyles.addButton}
           onPress={() => setIsModalVisible(true)}
         >
           <Ionicons name="add-outline" size={24} color="#fff" />
@@ -284,49 +287,49 @@ export default function TeacherForum() {
           animationType="slide"
           onRequestClose={() => setIsModalVisible(false)}
         >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Text style={styles.label}>Title of Resource</Text>
+          <View style={localStyles.modalContainer}>
+            <View style={localStyles.modalContent}>
+              <Text style={localStyles.label}>Title of Resource</Text>
               <TextInput
                 value={title}
                 onChangeText={(text) => setTitle(text)}
-                style={styles.input}
+                style={localStyles.input}
               />
 
-              <Text style={styles.label}>Description of Resource</Text>
+              <Text style={localStyles.label}>Description of Resource</Text>
               <TextInput
                 value={desc}
                 onChangeText={(text) => setDesc(text)}
-                style={styles.input}
+                style={localStyles.input}
                 multiline={true}
                 numberOfLines={3}
               />
 
               <TouchableOpacity
-                style={styles.filePickerButton}
+                style={localStyles.filePickerButton}
                 onPress={pickDocument}
               >
                 <Ionicons name="cloud-upload-outline" size={24} color="#666" />
-                <Text style={styles.filePickerText}>
+                <Text style={localStyles.filePickerText}>
                   {selectedFile?.assets?.[0]?.name || "Choose a file"}
                 </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.saveButton}
+                style={localStyles.saveButton}
                 onPress={() => addResource(title, desc)}
               >
-                <Text style={styles.saveButtonText}>Add Resource</Text>
+                <Text style={localStyles.saveButtonText}>Add Resource</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.cancelButton}
+                style={localStyles.cancelButton}
                 onPress={() => {
                   setIsModalVisible(false);
                   setSelectedFile(null);
                 }}
               >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
+                <Text style={localStyles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -338,7 +341,7 @@ export default function TeacherForum() {
   );
 }
 
-const styles = StyleSheet.create({
+const localStyles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.tertiary,
