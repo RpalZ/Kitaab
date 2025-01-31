@@ -19,49 +19,50 @@ export default function Home() {
     Animated.sequence([
       Animated.spring(fallAnim, {
         toValue: 0,
-        tension: 30,
-        friction: 5,
+        tension: 20,
+        friction: 6,
         useNativeDriver: true,
       }),
+      Animated.delay(300),
       Animated.sequence([
         Animated.timing(fadeAnim, {
           toValue: 0.3,
-          duration: 100,
+          duration: 50,
           useNativeDriver: true,
         }),
         Animated.timing(fadeAnim, {
           toValue: 1,
-          duration: 100,
+          duration: 50,
           useNativeDriver: true,
         }),
         Animated.timing(fadeAnim, {
           toValue: 0.5,
-          duration: 80,
+          duration: 40,
           useNativeDriver: true,
         }),
         Animated.timing(fadeAnim, {
           toValue: 1,
-          duration: 80,
+          duration: 40,
           useNativeDriver: true,
         }),
         Animated.timing(fadeAnim, {
           toValue: 0.2,
-          duration: 60,
+          duration: 30,
           useNativeDriver: true,
         }),
         Animated.timing(fadeAnim, {
           toValue: 1,
-          duration: 60,
+          duration: 30,
           useNativeDriver: true,
         }),
         Animated.timing(fadeAnim, {
           toValue: 0.4,
-          duration: 50,
+          duration: 25,
           useNativeDriver: true,
         }),
         Animated.timing(fadeAnim, {
           toValue: 1,
-          duration: 50,
+          duration: 25,
           useNativeDriver: true,
         }),
       ]),
