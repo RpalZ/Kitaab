@@ -42,9 +42,16 @@ export default function StudentLogin() {
     setLoading(true);
     try {
       await AuthUtils.signInWithRole(email, password, "student");
-      const token = await FIREBASE_AUTH.currentUser?.getIdToken();
+      const user = FIREBASE_AUTH.currentUser;
+      if (!user) {
+        throw new Error('Authentication failed');
+      }
+      
+      const token = await user.getIdToken();
       if (token) {
         await secureStorage.setItem("userToken", token);
+        // Wait for the auth state to be fully updated before navigation
+        await new Promise(resolve => setTimeout(resolve, 1000));
         router.replace("/student/dashboard");
       }
     } catch (error: any) {
@@ -68,6 +75,9 @@ export default function StudentLogin() {
       await updateProfile(response.user, {
         displayName: email.split("@")[0],
       });
+      
+      // Wait for the auth state to be fully updated before navigation
+      await new Promise(resolve => setTimeout(resolve, 1000));
       console.log("Student account created:", response.user.email);
       router.replace("/student/dashboard");
     } catch (error: any) {
