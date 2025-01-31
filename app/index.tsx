@@ -67,8 +67,8 @@ export default function Home() {
       ]),
       Animated.spring(buttonsFadeAnim, {
         toValue: 1,
-        tension: 30,
-        friction: 7,
+        tension: 65,
+        friction: 5,
         useNativeDriver: true,
       }),
     ]).start();
