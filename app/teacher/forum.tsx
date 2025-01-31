@@ -339,6 +339,11 @@ export default function TeacherForum() {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.tertiary,
+  },
+  
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -367,6 +372,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.text.primary,
     padding: 0,
+  },
+
+  scrollContainer: {
+    flex: 1,
+    padding: 16,
   },
 
   resourceButton: {
@@ -437,8 +447,94 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  scrollContainer: {
+  modalContainer: {
     flex: 1,
-    padding: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+
+  modalContent: {
+    backgroundColor: COLORS.card.primary,
+    padding: 20,
+    borderRadius: 12,
+    width: '90%',
+    maxWidth: 500,
+  },
+
+  label: {
+    fontSize: 16,
+    color: COLORS.text.primary,
+    marginBottom: 8,
+    fontWeight: '500',
+  },
+
+  input: {
+    backgroundColor: COLORS.card.secondary,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    color: COLORS.text.primary,
+    fontSize: 16,
+  },
+
+  filePickerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.card.secondary,
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+
+  filePickerText: {
+    marginLeft: 8,
+    color: COLORS.text.secondary,
+    fontSize: 14,
+  },
+
+  saveButton: {
+    backgroundColor: COLORS.primary,
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+
+  saveButtonText: {
+    color: COLORS.text.light,
+    fontSize: 16,
+    fontWeight: '500',
+  },
+
+  cancelButton: {
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+
+  cancelButtonText: {
+    color: COLORS.text.secondary,
+    fontSize: 16,
+  },
+
+  addButton: {
+    position: 'absolute',
+    right: 20,
+    bottom: 80,
+    backgroundColor: COLORS.primary,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
 });
