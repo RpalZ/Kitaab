@@ -43,9 +43,6 @@ export default function TeacherProfile() {
     try {
       if (!user) throw new Error("No user found");
 
-      // Reauthenticate user before email update
-
-      // Update profile and email
       await updateProfile(user, { displayName: newName });
       console.log("Profile updated successfully!");
       setProfileVisible(false);

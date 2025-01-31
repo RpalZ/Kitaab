@@ -1,21 +1,31 @@
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useState , useEffect} from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { StudentTabs } from "../components/StudentTabs";
 import { dashboardStyles as styles } from "../styles/components/dashboard.styles";
+import { FIREBASE_AUTH } from "@/FirebaseConfig";
 
 
 export default function StudentDashboard() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState("");
 
+  useEffect(() => {
+    const user = FIREBASE_AUTH.currentUser;
+    if (!user) return;
+    setUserEmail(user.email);
+    setDisplayName(user.displayName || user.email?.split("@")[0] || "Student");
+  }, []);
+    
   return (
     <ProtectedRoute requiredRole="student">
       <View style={styles.container}>
         <ScrollView contentContainerStyle={styles.scrollViewContent}>
           <View style={styles.header}>
-            <Text style={styles.welcomeText}>Welcome, Student!</Text>
+            <Text style={styles.welcomeText}>Welcome, {displayName}!</Text>
           </View>
 
           <View style={styles.statsContainer}>
