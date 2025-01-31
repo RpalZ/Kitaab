@@ -14,7 +14,7 @@ import { TeacherTabs } from "../components/TeacherTabs";
 import { dashboardStyles as styles } from "../styles/components/forum.styles";
 import { db, storage } from "../../FirebaseConfig";
 import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, updateDoc } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytes, getDownloadURL, getStorage} from "firebase/storage";
 import * as FileSystem from 'expo-file-system';
 import { Platform } from 'react-native';
 
@@ -137,11 +137,34 @@ export default function TeacherForum() {
       const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
       const querySnapshot = await getDocs(q);
   
-      const posts = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        title: doc.data().title,
-        description: doc.data().description,
-        file: doc.data().file || null,
+      const posts = await Promise.all(querySnapshot.docs.map(async (doc) => {
+        const data = doc.data();
+        let fileData = data.file || null;
+  
+        // If there's a file, get its download URL
+        if (fileData) {
+          try {
+            const storage = getStorage();
+            const fileRef = ref(storage, `posts/${doc.id}/files/${fileData.name}`);
+            const downloadUrl = await getDownloadURL(fileRef);
+            
+            // Update the file data with the fresh download URL
+            fileData = {
+              ...fileData,
+              uri: downloadUrl
+            };
+          } catch (fileError) {
+            console.error(`Error getting download URL for file in post ${doc.id}:`, fileError);
+            // Keep the original file data if we fail to get the download URL
+          }
+        }
+  
+        return {
+          id: doc.id,
+          title: data.title,
+          description: data.description,
+          file: fileData,
+        };
       }));
   
       return posts;
@@ -149,12 +172,32 @@ export default function TeacherForum() {
       console.error("Error fetching posts: ", error);
       return [];
     }
-  };
+  };  
 
   const downloadFile = async (fileUri: string, fileName: string) => {
     try {
       if (Platform.OS === 'web') {
-        //Add download logic here
+        console.log("Using the following fileUri:",fileUri);
+        // Get storage reference from URL
+        const response = await fetch(fileUri);
+        if (!response.ok) throw new Error("Failed to fetch file");
+  
+        const blob = await response.blob();
+  
+        // Create a download link
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+  
+        // Trigger download
+        document.body.appendChild(link);
+        link.click();
+        
+        // Cleanup
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
         }
       else {
         const fileUriLocal = FileSystem.documentDirectory + fileName;
