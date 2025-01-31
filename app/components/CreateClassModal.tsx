@@ -2,7 +2,7 @@ import { db } from '@/FirebaseConfig';
 import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS, FONTS, SPACING } from 'app/styles/theme';
 import { addDoc, collection } from 'firebase/firestore';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 type Student = {
@@ -21,7 +21,7 @@ type CreateClassModalProps = {
   }) => void;
 };
 
-export function CreateClassModal({ visible, onClose, onCreateClass }: CreateClassModalProps) {
+export const CreateClassModal: React.FC<CreateClassModalProps> = ({ visible, onClose, onCreateClass }) => {
   const [className, setClassName] = useState('');
   const [subject, setSubject] = useState('');
   const [studentEmail, setStudentEmail] = useState('');
@@ -84,7 +84,7 @@ export function CreateClassModal({ visible, onClose, onCreateClass }: CreateClas
 
   return (
     <Modal
-      animationType="fade"
+      animationType="slide"
       transparent={true}
       visible={visible}
       onRequestClose={onClose}
@@ -109,35 +109,6 @@ export function CreateClassModal({ visible, onClose, onCreateClass }: CreateClas
             onChangeText={setSubject}
           />
 
-          <View style={styles.studentSection}>
-            <Text style={styles.sectionTitle}>Add Students</Text>
-            <View style={styles.addStudentContainer}>
-              <TextInput
-                style={[styles.input, styles.studentInput]}
-                placeholder="Student Email"
-                placeholderTextColor={COLORS.text.secondary}
-                value={studentEmail}
-                onChangeText={setStudentEmail}
-              />
-              <TouchableOpacity style={styles.addButton} onPress={addStudent}>
-                <MaterialIcons name="add" size={24} color={COLORS.text.light} />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={styles.studentList}>
-              {students.map((student) => (
-                <View key={student.id} style={styles.studentItem}>
-                  <Text style={styles.studentText}>{student.email}</Text>
-                  <TouchableOpacity
-                    onPress={() => removeStudent(student.id)}
-                    style={styles.removeButton}
-                  >
-                    <MaterialIcons name="remove-circle" size={24} color={COLORS.error} />
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </ScrollView>
-          </View>
 
           <View style={styles.buttonContainer}>
             <TouchableOpacity
@@ -268,4 +239,4 @@ const styles = StyleSheet.create({
     fontSize: FONTS.sizes.md,
     fontWeight: FONTS.weights.medium,
   },
-}); 
+});

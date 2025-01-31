@@ -1,7 +1,17 @@
 import { db } from '@/FirebaseConfig';
 import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS } from 'app/styles/theme';
-import { addDoc, collection } from 'firebase/firestore';
+import {
+  arrayUnion,
+  collection,
+  doc,
+  getDocs,
+  increment,
+  query,
+  serverTimestamp,
+  where,
+  writeBatch
+} from 'firebase/firestore';
 import { useState } from 'react';
 import { Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
@@ -22,26 +32,78 @@ export function AddStudentsModal({ visible, onClose, classId }: AddStudentsModal
   const [students, setStudents] = useState<Student[]>([]);
 
   const addStudent = async () => {
-    if (!studentEmail.trim()) return;
+    const email = studentEmail.trim();
+    if (!email) {
+      alert('Please enter a student email');
+      return;
+    }
 
     try {
-      const studentId = Date.now().toString();
-      const newStudent = {
-        id: studentId,
-        name: studentEmail.split('@')[0],
-        email: studentEmail.trim(),
-        progress: 0,
-        lastActive: new Date().toISOString()
-      };
+      // Check if student exists in users collection
+      const userQuery = query(
+        collection(db, 'users'), 
+        where('email', '==', email),
+        where('role', '==', 'student')
+      );
+      const userSnapshot = await getDocs(userQuery);
+      
+      if (userSnapshot.empty) {
+        alert('No student account found with this email. Students must create an account first.');
+        return;
+      }
 
-      // Add student to the class's students collection
-      await addDoc(collection(db, 'classes', classId, 'students'), newStudent);
+      const studentDoc = userSnapshot.docs[0];
+      const studentId = studentDoc.id;
+      const studentData = studentDoc.data();
 
-      setStudents([...students, newStudent]);
+      if (!studentData) {
+        alert('Invalid student data');
+        return;
+      }
+
+      // Check if student is already in the class
+      if (studentData.classIds?.includes(classId)) {
+        alert('Student is already in this class');
+        return;
+      }
+
+      // Use a batch write to ensure all operations succeed or fail together
+      const batch = writeBatch(db);
+
+      // Update class document to increment student count
+      const classRef = doc(db, 'classes', classId);
+      batch.update(classRef, {
+        students: increment(1)
+      });
+
+      // Add class to student's profile
+      const studentRef = doc(db, 'users', studentId);
+      batch.update(studentRef, {
+        classIds: arrayUnion(classId)
+      });
+
+      // Create student progress record
+      const progressRef = doc(db, 'classes', classId, 'students', studentId);
+      batch.set(progressRef, {
+        studentId,
+        classId,
+        overallProgress: 0,
+        lastAccessed: serverTimestamp(),
+        assignments: {},
+        name: studentData.displayName || email.split('@')[0], // Add name from user profile
+        email: email
+      });
+
+      // Commit the batch
+      await batch.commit();
+
       setStudentEmail('');
+      alert('Student added successfully!');
+      onClose(); // Close modal after successful addition
+      
     } catch (error) {
       console.error('Error adding student:', error);
-      alert('Failed to add student');
+      alert('Failed to add student. Please check permissions and try again.');
     }
   };
 

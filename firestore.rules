@@ -20,25 +20,48 @@ service cloud.firestore {
       let userData = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
       return userData.classIds.hasAny([classId]);
     }
+
+    function isClassTeacher(classId) {
+      return isTeacher() && 
+        get(/databases/$(database)/documents/classes/$(classId)).data.teacherId == request.auth.uid;
+    }
     
     // User profiles
     match /users/{userId} {
-      allow read: if isAuthenticated() && request.auth.uid == userId;
-      allow write: if isAuthenticated() && request.auth.uid == userId;
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      // Allow teachers to update classIds and students to update their own profiles
+      allow update: if isAuthenticated() && (
+        request.auth.uid == userId || 
+        (isTeacher() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['classIds']))
+      );
     }
     
     // Classes
     match /classes/{classId} {
       allow read: if isTeacher() || isClassMember(classId);
       allow create: if isTeacher();
-      allow update, delete: if isTeacher() && 
-        resource.data.teacherId == request.auth.uid;
-      
-      // Allow nested collections
-      match /{document=**} {
+      // Allow updates to student count and resources
+      allow update: if isClassTeacher(classId) || 
+        (isAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['students']));
+        
+      // Class resources
+      match /resources/{resourceId} {
         allow read: if isTeacher() || isClassMember(classId);
-        allow write: if isTeacher() && 
-          get(/databases/$(database)/documents/classes/$(classId)).data.teacherId == request.auth.uid;
+        allow write, delete: if isClassTeacher(classId);
+      }
+      
+      // Class assignments
+      match /assignments/{assignmentId} {
+        allow read: if isTeacher() || isClassMember(classId);
+        allow write: if isClassTeacher(classId);
+      }
+
+      // Class students
+      match /students/{studentId} {
+        allow read: if isTeacher() || request.auth.uid == studentId;
+        allow create: if isTeacher() || request.auth.uid == studentId;
+        allow update: if isTeacher() || request.auth.uid == studentId;
       }
     }
     
@@ -49,5 +72,21 @@ service cloud.firestore {
       allow create: if isStudent() && request.resource.data.studentId == request.auth.uid;
       allow update: if resource.data.studentId == request.auth.uid;
     }
+
+    // User specific chat rules
+    match /users/{userId}/{document=**} {
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Chat messages rules
+    match /users/{userId}/chats/{chatId}/messages/{messageId} {
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Teacher forum
+    match /posts/{postId} {
+      allow read: if true;
+      allow create, write: if isAuthenticated();
+    }
   }
-} 
+}
