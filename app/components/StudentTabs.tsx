@@ -7,7 +7,7 @@ const tabs = [
   { key: 'dashboard', label: 'Dashboard' },
   { key: 'classes', label: 'Classes' },
   { key: 'assignments', label: 'Assignments' },
-  { key: 'resources', label: 'Resources' },
+  // { key: 'resources', label: 'Resources' },
   { key: 'profile', label: 'Profile' },
 ];
 

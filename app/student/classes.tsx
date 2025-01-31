@@ -1,9 +1,8 @@
 import { db, FIREBASE_AUTH } from '@/FirebaseConfig';
-import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from "expo-router";
 import { collection, doc, getDoc, getDocs, onSnapshot, query, where } from 'firebase/firestore';
 import { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { StudentTabs } from "../components/StudentTabs";
 import { COLORS } from "../styles/theme";
@@ -101,27 +100,22 @@ export default function StudentClasses() {
                 onPress={() => router.push(`/student/class/${classItem.id}`)}
               >
                 <View style={styles.classHeader}>
-                  <Text style={styles.className}>{classItem.name}</Text>
-                  <Text style={styles.teacherName}>{classItem.teacher}</Text>
-                </View>
-
-                <View style={styles.classInfo}>
-                  <View style={styles.infoItem}>
-                    <MaterialIcons name="assignment" size={20} color={COLORS.text.secondary} />
-                    <Text style={styles.infoText}>{classItem.assignmentsDue} assignments due</Text>
+                  <View style={styles.classInfo}>
+                    <Text style={styles.className} numberOfLines={2}>
+                      {classItem.name}
+                    </Text>
+                    <Text style={styles.teacherName} numberOfLines={1}>
+                      {classItem.teacher}
+                    </Text>
                   </View>
-                  
-                  {classItem.nextDeadline && (
-                    <View style={styles.infoItem}>
-                      <MaterialIcons name="event" size={20} color={COLORS.text.secondary} />
-                      <Text style={styles.infoText}>
-                        Next deadline: {new Date(classItem.nextDeadline).toLocaleDateString()}
-                      </Text>
-                    </View>
-                  )}
                 </View>
 
                 <View style={styles.progressContainer}>
+                  <View style={styles.progressInfo}>
+                    <Text style={styles.progressPercentage}>
+                      {classItem.progress}% Complete
+                    </Text>
+                  </View>
                   <View style={styles.progressBar}>
                     <View 
                       style={[
@@ -130,7 +124,6 @@ export default function StudentClasses() {
                       ]} 
                     />
                   </View>
-                  <Text style={styles.progressText}>{classItem.progress}% Complete</Text>
                 </View>
               </TouchableOpacity>
             ))}
@@ -177,48 +170,54 @@ export default function StudentClasses() {
 
 const styles = StyleSheet.create({
   container: {
+    paddingTop: Platform.OS === 'ios' ? 30 : 0,
     flex: 1,
-    backgroundColor: COLORS.tertiary,
+    backgroundColor: COLORS.background,
   },
+
   content: {
     flex: 1,
     padding: 16,
   },
   classCard: {
     backgroundColor: COLORS.card.primary,
-    padding: 20,
+    padding: 16,
     borderRadius: 12,
-    marginBottom: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   classHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     marginBottom: 12,
+  },
+  classInfo: {
+    flex: 1,
   },
   className: {
     fontSize: 18,
     fontWeight: 'bold',
     color: COLORS.text.primary,
+    marginBottom: 4,
+    flexWrap: 'wrap',
   },
   teacherName: {
-    fontSize: 16,
+    fontSize: 14,
     color: COLORS.text.secondary,
-    marginLeft: 8,
   },
   progressContainer: {
-    marginTop: 10,
+    marginTop: 8,
   },
   progressInfo: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
-  },
-  progressText: {
-    color: COLORS.text.secondary,
-    fontSize: 12,
-    marginTop: 4,
+    marginBottom: 6,
   },
   progressPercentage: {
     fontSize: 14,
@@ -226,14 +225,15 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   progressBar: {
-    height: 8,
+    height: 6,
     backgroundColor: COLORS.card.secondary,
-    borderRadius: 4,
+    borderRadius: 3,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
     backgroundColor: COLORS.primary,
+    borderRadius: 3,
   },
   deadlineInfo: {
     flexDirection: 'row',
@@ -242,21 +242,6 @@ const styles = StyleSheet.create({
   deadlineText: {
     fontSize: 14,
     color: COLORS.text.secondary,
-    marginLeft: 8,
-  },
-  classInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  infoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  infoText: {
-    color: COLORS.text.secondary,
-    fontSize: 14,
     marginLeft: 8,
   },
   assignmentsSection: {

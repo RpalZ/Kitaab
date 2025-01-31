@@ -3,7 +3,6 @@ import { COLORS } from 'app/styles/theme';
 import { Timestamp } from 'firebase/firestore';
 import { useState } from 'react';
 import { Linking, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Menu } from 'react-native-paper';
 
 interface AssignmentDetailModalProps {
   visible: boolean;
@@ -48,45 +47,32 @@ export function AssignmentDetailModal({
       transparent={true}
       visible={visible}
       onRequestClose={onClose}
+      statusBarTranslucent
     >
-      <View style={styles.centeredView}>
-        <View style={styles.modalView}>
+      <TouchableOpacity 
+        style={styles.centeredView} 
+        activeOpacity={1} 
+        onPress={onClose}
+      >
+        <TouchableOpacity 
+          activeOpacity={1} 
+          onPress={e => e.stopPropagation()}
+          style={styles.modalView}
+        >
           <View style={styles.header}>
-            <Text style={styles.title}>{assignment.title}</Text>
-            <Menu
-              visible={menuVisible}
-              onDismiss={() => setMenuVisible(false)}
-              anchor={
-                <TouchableOpacity onPress={() => setMenuVisible(true)}>
-                  <MaterialIcons name="more-vert" size={24} color={COLORS.text.primary} />
-                </TouchableOpacity>
-              }
-            >
-              {onEdit && (
-                <Menu.Item 
-                  onPress={() => {
-                    setMenuVisible(false);
-                    onEdit();
-                  }} 
-                  title="Edit" 
-                  leadingIcon="edit"
-                />
-              )}
-              {onDelete && (
-                <Menu.Item 
-                  onPress={() => {
-                    setMenuVisible(false);
-                    onDelete();
-                  }} 
-                  title="Delete" 
-                  leadingIcon="delete"
-                  titleStyle={{ color: COLORS.error }}
-                />
-              )}
-            </Menu>
+            <Text style={styles.title} numberOfLines={2}>
+              {assignment.title}
+            </Text>
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <MaterialIcons name="close" size={24} color={COLORS.text.primary} />
+            </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.content}>
+          <ScrollView 
+            style={styles.content}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.contentContainer}
+          >
             <View style={styles.infoSection}>
               <Text style={styles.label}>Due Date</Text>
               <Text style={styles.value}>
@@ -102,7 +88,9 @@ export function AssignmentDetailModal({
             {assignment.description && (
               <View style={styles.infoSection}>
                 <Text style={styles.label}>Description</Text>
-                <Text style={styles.description}>{assignment.description}</Text>
+                <Text style={styles.description}>
+                  {assignment.description}
+                </Text>
               </View>
             )}
 
@@ -118,7 +106,9 @@ export function AssignmentDetailModal({
                     size={24} 
                     color={COLORS.primary} 
                   />
-                  <Text style={styles.fileName}>{assignment.file.filename}</Text>
+                  <Text style={styles.fileName} numberOfLines={1}>
+                    {assignment.file.filename}
+                  </Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -138,8 +128,8 @@ export function AssignmentDetailModal({
               )}
             </View>
           )}
-        </View>
-      </View>
+        </TouchableOpacity>
+      </TouchableOpacity>
     </Modal>
   );
 }
@@ -150,13 +140,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    padding: 16,
   },
   modalView: {
-    width: '90%',
-    maxHeight: '80%',
+    width: '100%',
+    maxHeight: '90%',
     backgroundColor: COLORS.card.primary,
     borderRadius: 20,
-    padding: 20,
+    padding: 16,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -170,31 +161,44 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.card.secondary,
   },
   title: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: COLORS.text.primary,
     flex: 1,
+    marginRight: 12,
   },
   closeButton: {
-    padding: 5,
+    padding: 4,
   },
   content: {
-    flex: 1,
+    maxHeight: '70%',
+  },
+  contentContainer: {
+    paddingBottom: 16,
   },
   infoSection: {
-    marginBottom: 20,
+    backgroundColor: COLORS.card.secondary,
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 12,
   },
   label: {
-    fontSize: 14,
+    fontSize: 12,
     color: COLORS.text.secondary,
-    marginBottom: 5,
+    marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   value: {
     fontSize: 16,
     color: COLORS.text.primary,
+    fontWeight: '500',
   },
   description: {
     fontSize: 16,
@@ -204,36 +208,46 @@ const styles = StyleSheet.create({
   fileButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.card.secondary,
-    padding: 15,
-    borderRadius: 10,
+    backgroundColor: COLORS.background,
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 4,
   },
   fileName: {
     color: COLORS.text.primary,
-    marginLeft: 10,
-    fontSize: 16,
+    marginLeft: 8,
+    fontSize: 14,
+    flex: 1,
   },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 20,
+    gap: 12,
+    marginTop: 16,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.card.secondary,
   },
   editButton: {
+    flex: 1,
     backgroundColor: COLORS.primary,
-    padding: 15,
-    borderRadius: 10,
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
   },
   deleteButton: {
+    flex: 1,
     backgroundColor: COLORS.error,
-    padding: 15,
-    borderRadius: 10,
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
   },
   buttonText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
-    color: COLORS.text.primary,
+    color: COLORS.text.light,
   },
   deleteText: {
-    color: COLORS.text.primary,
+    color: COLORS.text.light,
   },
 }); 

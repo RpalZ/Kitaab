@@ -8,14 +8,26 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 import { useEffect, useState } from 'react';
 import { Modal, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
-type AddAssignmentModalProps = {
+interface AddAssignmentModalProps {
   visible: boolean;
   onClose: () => void;
   classId: string;
   assignmentToEdit?: Assignment | null;
-};
+  onSubmit: (data: {
+    title: string;
+    description: string;
+    dueDate: Date;
+    totalPoints: number;
+    resources: Array<{
+      id: string;
+      title: string;
+      description?: string;
+      url: string;
+    }>;
+  }) => Promise<void>;
+}
 
-export function AddAssignmentModal({ visible, onClose, classId, assignmentToEdit }: AddAssignmentModalProps) {
+export function AddAssignmentModal({ visible, onClose, classId, assignmentToEdit, onSubmit }: AddAssignmentModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [totalPoints, setTotalPoints] = useState('');
