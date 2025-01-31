@@ -21,6 +21,7 @@ import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, updateDoc
 import { ref, uploadBytes, getDownloadURL, getStorage} from "firebase/storage";
 import * as WebBrowser from 'expo-web-browser';
 import { COLORS } from "../styles/theme";
+import { globalStyles } from 'app/styles/global';
 
 type Resource = {
   createdAt: any; 
@@ -257,7 +258,7 @@ export default function TeacherForum() {
           )}
         </View>
 
-        <ScrollView style={localStyles.scrollContainer}>
+        <ScrollView showsVerticalScrollIndicator={true} style={[localStyles.scrollContainer, globalStyles.scrollViewStyle]}>
           {filteredResources.length === 0 ? (
             <View style={localStyles.emptyStateContainer}>
               <Ionicons name="document-outline" size={48} color={COLORS.text.secondary} />

@@ -41,7 +41,13 @@ export const COLORS = {
   shadow: {
     color: '#000000',
     opacity: 0.2,
-  }
+  },
+  
+  scrollbar: {
+    thumb: '#A78BFA40',      // Purple with 40% opacity
+    track: '#13111C',        // Dark background
+    thumbHover: '#A78BFA60', // Purple with 60% opacity
+  },
 };
 
 export const SPACING = {
