@@ -13,50 +13,75 @@ export default function Home() {
   const router = useRouter();
   const [showSplash, setShowSplash] = useState(true);
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const fallAnim = useRef(new Animated.Value(-200)).current;
+  const swingAnim = useRef(new Animated.Value(0)).current;
 
   const handleAnimationComplete = () => {
-    // Create a flickering sequence
     Animated.sequence([
-      // Initial fade in
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: true,
-        easing: Easing.inOut(Easing.cubic),
-      }),
-      // First flicker
-      Animated.timing(fadeAnim, {
-        toValue: 0.3,
-        duration: 50,
+      Animated.spring(fallAnim, {
+        toValue: 0,
+        tension: 50,
+        friction: 4,
         useNativeDriver: true,
       }),
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 50,
-        useNativeDriver: true,
-      }),
-      // Second flicker
-      Animated.timing(fadeAnim, {
-        toValue: 0.5,
-        duration: 40,
-        useNativeDriver: true,
-      }),
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 40,
-        useNativeDriver: true,
-      }),
-      // Final quick flicker
-      Animated.timing(fadeAnim, {
-        toValue: 0.8,
-        duration: 30,
-        useNativeDriver: true,
-      }),
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 30,
-        useNativeDriver: true,
-      }),
+      Animated.sequence([
+        Animated.timing(swingAnim, {
+          toValue: 0.1,
+          duration: 200,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.quad),
+        }),
+        Animated.timing(swingAnim, {
+          toValue: -0.1,
+          duration: 400,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.quad),
+        }),
+        Animated.timing(swingAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.quad),
+        }),
+      ]),
+      Animated.sequence([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.cubic),
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 0.3,
+          duration: 50,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 50,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 0.5,
+          duration: 40,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 40,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 0.8,
+          duration: 30,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 30,
+          useNativeDriver: true,
+        }),
+      ]),
     ]).start(() => {
       setShowSplash(false);
     });
@@ -72,7 +97,6 @@ export default function Home() {
           } else if (role === 'student') {
             router.replace('/student/dashboard');
           } else {
-            // Handle unknown role
             console.error('Unknown user role');
             await FIREBASE_AUTH.signOut();
             await secureStorage.removeItem('userToken');
@@ -81,8 +105,6 @@ export default function Home() {
           console.error('Error checking user role:', error);
           await FIREBASE_AUTH.signOut();
           await secureStorage.removeItem('userToken');
-      
-       
         }
       }
     });
@@ -98,7 +120,22 @@ export default function Home() {
         />
       )}
       <View style={styles.header}>
-        <Animated.View style={{ opacity: fadeAnim }}>
+        <Animated.View 
+          style={[
+            { 
+              opacity: fadeAnim,
+              transform: [
+                { translateY: fallAnim },
+                {
+                  rotate: swingAnim.interpolate({
+                    inputRange: [-1, 1],
+                    outputRange: ['-20deg', '20deg']
+                  })
+                }
+              ]
+            }
+          ]}
+        >
           <Image
             source={require("../assets/images/kitaablogowhite.png")}
             style={styles.logo}
