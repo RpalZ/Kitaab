@@ -1,27 +1,26 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { globalStyles } from 'app/styles/global';
 import * as DocumentPicker from "expo-document-picker";
+import * as WebBrowser from 'expo-web-browser';
+import { addDoc, collection, getDocs, orderBy, query, serverTimestamp, updateDoc } from "firebase/firestore";
+import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 import { useEffect, useState } from "react";
 import {
-    Modal,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-    StyleSheet,
-    ActivityIndicator,
-    Alert,
-    Platform
+  ActivityIndicator,
+  Alert,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from "react-native";
+import { db, storage } from "../../FirebaseConfig";
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { TeacherTabs } from "../components/TeacherTabs";
-import { dashboardStyles } from "../styles/components/forum.styles";
-import { db, storage } from "../../FirebaseConfig";
-import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, updateDoc } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL, getStorage} from "firebase/storage";
-import * as WebBrowser from 'expo-web-browser';
 import { COLORS } from "../styles/theme";
-import { globalStyles } from 'app/styles/global';
 
 type Resource = {
   createdAt: any; 
@@ -377,6 +376,7 @@ const localStyles = StyleSheet.create({
   
   searchContainer: {
     flexDirection: 'row',
+    marginTop: Platform.OS === 'ios' ? 60 : 0,
     alignItems: 'center',
     backgroundColor: COLORS.card.primary,
     borderRadius: 12,
