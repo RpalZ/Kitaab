@@ -1,45 +1,51 @@
-import React, { useState } from 'react';
-import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { FIREBASE_AUTH } from '@/FirebaseConfig';
-import { updatePassword } from 'firebase/auth';
-import { COLORS } from '../../styles/theme';
+import { FIREBASE_AUTH } from "@/FirebaseConfig";
+import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "firebase/auth";
+import { useState } from "react";
+import { Alert, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { COLORS } from "../../styles/theme";
 
 interface ChangePasswordModalProps {
   visible: boolean;
   onClose: () => void;
 }
 
-export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ visible, onClose }) => {
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
+export function ChangePasswordModal({ visible, onClose }: ChangePasswordModalProps) {
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleChangePassword = async () => {
-    if (newPassword.length < 6) {
-      setError('Password must be at least 6 characters');
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-
     try {
+      setLoading(true);
       const user = FIREBASE_AUTH.currentUser;
-      if (!user) throw new Error('No user logged in');
+      
+      if (!user || !user.email) {
+        throw new Error("No user found");
+      }
 
+      if (newPassword !== confirmPassword) {
+        throw new Error("New passwords don't match");
+      }
+
+      if (newPassword.length < 6) {
+        throw new Error("New password must be at least 6 characters");
+      }
+
+      // Reauthenticate user
+      const credential = EmailAuthProvider.credential(user.email, currentPassword);
+      await reauthenticateWithCredential(user, credential);
+
+      // Update password
       await updatePassword(user, newPassword);
-      setNewPassword('');
-      setConfirmPassword('');
+
+      Alert.alert("Success", "Password updated successfully");
       onClose();
-    } catch (error) {
-      console.error('Error updating password:', error);
-      setError('Failed to update password');
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error: any) {
+      Alert.alert("Error", error.message || "Failed to change password");
     } finally {
       setLoading(false);
     }
@@ -47,128 +53,117 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ visibl
 
   return (
     <Modal
-      transparent={true}
       visible={visible}
+      transparent
       animationType="slide"
       onRequestClose={onClose}
     >
-      <View style={styles.centeredView}>
-        <View style={styles.modalView}>
-          <Text style={styles.modalTitle}>Change Password</Text>
-          
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
-          
+      <View style={styles.modalContainer}>
+        <View style={styles.modalContent}>
+          <Text style={styles.title}>Change Password</Text>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Current Password"
+            secureTextEntry
+            value={currentPassword}
+            onChangeText={setCurrentPassword}
+            placeholderTextColor={COLORS.text.secondary}
+          />
+
           <TextInput
             style={styles.input}
             placeholder="New Password"
-            placeholderTextColor={COLORS.text.secondary}
-            value={newPassword}
-            onChangeText={(text) => {
-              setNewPassword(text);
-              setError('');
-            }}
             secureTextEntry
+            value={newPassword}
+            onChangeText={setNewPassword}
+            placeholderTextColor={COLORS.text.secondary}
           />
-          
+
           <TextInput
             style={styles.input}
             placeholder="Confirm New Password"
-            placeholderTextColor={COLORS.text.secondary}
-            value={confirmPassword}
-            onChangeText={(text) => {
-              setConfirmPassword(text);
-              setError('');
-            }}
             secureTextEntry
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            placeholderTextColor={COLORS.text.secondary}
           />
 
           <View style={styles.buttonContainer}>
             <TouchableOpacity 
               style={[styles.button, styles.cancelButton]} 
               onPress={onClose}
-              disabled={loading}
             >
               <Text style={styles.buttonText}>Cancel</Text>
             </TouchableOpacity>
             
-            <TouchableOpacity 
-              style={[styles.button, styles.changeButton]} 
+            <TouchableOpacity
+              style={[styles.button, styles.saveButton, loading && styles.disabledButton]}
               onPress={handleChangePassword}
               disabled={loading}
             >
-              {loading ? (
-                <ActivityIndicator color={COLORS.text.light} />
-              ) : (
-                <Text style={styles.buttonText}>Change Password</Text>
-              )}
+              <Text style={styles.buttonText}>
+                {loading ? "Changing..." : "Change Password"}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
       </View>
     </Modal>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  centeredView: {
+  modalContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
-  modalView: {
+  modalContent: {
     backgroundColor: COLORS.background,
-    borderRadius: 20,
-    padding: 35,
-    width: '90%',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5
+    borderRadius: 16,
+    padding: 20,
+    width: "90%",
+    maxWidth: 400,
   },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
     color: COLORS.text.primary,
+    marginBottom: 20,
+    textAlign: "center",
   },
   input: {
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: 10,
-    marginBottom: 15,
-    borderRadius: 5,
+    backgroundColor: COLORS.card.primary,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
     color: COLORS.text.primary,
   },
   buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 15,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
   },
   button: {
     flex: 1,
-    padding: 10,
-    marginHorizontal: 5,
-    borderRadius: 5,
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
   },
   cancelButton: {
-    backgroundColor: COLORS.card.primary,
+    backgroundColor: COLORS.card.secondary,
   },
-  changeButton: {
+  saveButton: {
     backgroundColor: COLORS.primary,
+  },
+  disabledButton: {
+    opacity: 0.5,
   },
   buttonText: {
     color: COLORS.text.light,
-    textAlign: 'center',
-    fontWeight: 'bold',
+    fontWeight: "600",
+    fontSize: 16,
   },
-  errorText: {
-    color: COLORS.error,
-    marginBottom: 10,
-    textAlign: 'center',
-  }
 });
