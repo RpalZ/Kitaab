@@ -61,13 +61,13 @@ export default function Home() {
         }),
         Animated.timing(fadeAnim, {
           toValue: 1,
-          duration: 20,
+          duration: 10,
           useNativeDriver: true,
         }),
       ]),
       Animated.spring(buttonsFadeAnim, {
         toValue: 1,
-        tension: 65,
+        tension: 5,
         friction: 5,
         useNativeDriver: true,
       }),
