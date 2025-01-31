@@ -88,5 +88,11 @@ service cloud.firestore {
       allow read: if true;
       allow create, write: if isAuthenticated();
     }
+
+    // Add to storage rules
+    match /assignments/{classId}/{fileName} {
+      allow read: if isTeacher() || isClassMember(classId);
+      allow write: if isClassTeacher(classId);
+    }
   }
 }

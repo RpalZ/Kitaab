@@ -14,6 +14,7 @@ export const COLORS = {
   white: '#FFFFFF',
   blue: '#62B6CB',
   error: '#EF4444',      // Red for errors
+  warning: '#fcd703',    // yellow for warning
   success: '#10B981',    // Green for success states
   
   // Text colors
