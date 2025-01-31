@@ -16,6 +16,7 @@ import { TeacherTabs } from "../components/TeacherTabs";
 import { profileStyles as styles } from "../styles/components/profile.styles";
 import { secureStorage } from "../utils/secureStorage";
 import { doc, setDoc } from "firebase/firestore";
+import { ChangePasswordModal } from "../components/profile/ChangePasswordModal";
 
 export default function TeacherProfile() {
   const user = FIREBASE_AUTH.currentUser;
@@ -26,6 +27,7 @@ export default function TeacherProfile() {
   const [profileVisible, setProfileVisible] = useState(false);
   const [name, setName] = useState(user?.displayName || "");
   const [email, setEmail] = useState(user?.email || "");
+  const [changePasswordVisible, setChangePasswordVisible] = useState(false);
 
   const handleSignOut = () => {
     signOut(FIREBASE_AUTH)
@@ -84,7 +86,10 @@ export default function TeacherProfile() {
             <Text style={styles.menuItemText}>Edit Profile</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => setChangePasswordVisible(true)}
+          >
             <Text style={styles.menuItemText}>Change Password</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.menuItem}>
@@ -126,6 +131,11 @@ export default function TeacherProfile() {
           setSignOutVisible(false);
           handleSignOut();
         }}
+      />
+
+      <ChangePasswordModal
+        visible={changePasswordVisible}
+        onClose={() => setChangePasswordVisible(false)}
       />
 
       <TeacherTabs activeTab={activeTab} onTabPress={setActiveTab} />
