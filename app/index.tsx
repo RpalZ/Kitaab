@@ -11,56 +11,68 @@ import { secureStorage } from './utils/secureStorage';
 
 export default function Home() {
   const router = useRouter();
-  const [showSplash, setShowSplash] = useState(true);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [showSplash, setShowSplash] = useState(false);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const fallAnim = useRef(new Animated.Value(-300)).current;
+  const scaleAnim = useRef(new Animated.Value(0.5)).current;
+  const buttonsFadeAnim = useRef(new Animated.Value(0)).current;
 
-  const handleAnimationComplete = () => {
-    // Create a flickering sequence
+  useEffect(() => {
     Animated.sequence([
-      // Initial fade in
-      Animated.timing(fadeAnim, {
+      Animated.parallel([
+        Animated.spring(fallAnim, {
+          toValue: 0,
+          tension: 15,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          tension: 20,
+          friction: 7,
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.sequence([
+        Animated.timing(fadeAnim, {
+          toValue: 0.1,
+          duration: 60,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 60,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 0.4,
+          duration: 30,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 30,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 0.6,
+          duration: 20,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 10,
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.spring(buttonsFadeAnim, {
         toValue: 1,
-        duration: 200,
-        useNativeDriver: true,
-        easing: Easing.inOut(Easing.cubic),
-      }),
-      // First flicker
-      Animated.timing(fadeAnim, {
-        toValue: 0.3,
-        duration: 50,
+        tension: 5,
+        friction: 5,
         useNativeDriver: true,
       }),
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 50,
-        useNativeDriver: true,
-      }),
-      // Second flicker
-      Animated.timing(fadeAnim, {
-        toValue: 0.5,
-        duration: 40,
-        useNativeDriver: true,
-      }),
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 40,
-        useNativeDriver: true,
-      }),
-      // Final quick flicker
-      Animated.timing(fadeAnim, {
-        toValue: 0.8,
-        duration: 30,
-        useNativeDriver: true,
-      }),
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 30,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      setShowSplash(false);
-    });
-  };
+    ]).start();
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, async (user) => {
@@ -72,7 +84,6 @@ export default function Home() {
           } else if (role === 'student') {
             router.replace('/student/dashboard');
           } else {
-            // Handle unknown role
             console.error('Unknown user role');
             await FIREBASE_AUTH.signOut();
             await secureStorage.removeItem('userToken');
@@ -81,8 +92,6 @@ export default function Home() {
           console.error('Error checking user role:', error);
           await FIREBASE_AUTH.signOut();
           await secureStorage.removeItem('userToken');
-      
-       
         }
       }
     });
@@ -92,24 +101,78 @@ export default function Home() {
 
   return (
     <View style={styles.container}>
-      {showSplash && (
-        <SplashScreen
-          onAnimationComplete={handleAnimationComplete}
-        />
-      )}
       <View style={styles.header}>
-        <Animated.View style={{ opacity: fadeAnim }}>
+        <Animated.View 
+          style={[
+            { 
+              opacity: fadeAnim,
+              transform: [
+                { translateY: fallAnim },
+                { scale: scaleAnim },
+                {
+                  rotate: fallAnim.interpolate({
+                    inputRange: [-300, 0],
+                    outputRange: ['-10deg', '0deg'],
+                  })
+                }
+              ]
+            }
+          ]}
+        >
           <Image
             source={require("../assets/images/kitaablogowhite.png")}
             style={styles.logo}
             resizeMode="contain"
           />
         </Animated.View>
-        <Text style={styles.title}>Kitaab</Text>
-        <Text style={styles.subtitle}>Choose your role to get started</Text>
+        <Animated.Text 
+          style={[
+            styles.title, 
+            { 
+              opacity: buttonsFadeAnim,
+              transform: [{
+                translateY: buttonsFadeAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [20, 0],
+                })
+              }]
+            }
+          ]}
+        >
+          Kitaab
+        </Animated.Text>
+        <Animated.Text 
+          style={[
+            styles.subtitle, 
+            { 
+              opacity: buttonsFadeAnim,
+              transform: [{
+                translateY: buttonsFadeAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [20, 0],
+                })
+              }]
+            }
+          ]}
+        >
+          Choose your role to get started
+        </Animated.Text>
       </View>
 
-      <View style={styles.buttonContainer}>
+      <Animated.View 
+        style={[
+          styles.buttonContainer,
+          {
+            opacity: buttonsFadeAnim,
+            transform: [{
+              translateY: buttonsFadeAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [30, 0],
+              })
+            }]
+          }
+        ]}
+      >
         <TouchableOpacity
           style={[styles.button, { backgroundColor: COLORS.primary }]}
           onPress={() => router.push("/teacher/login")}
@@ -123,7 +186,7 @@ export default function Home() {
         >
           <Text style={styles.buttonText}>I'm a Student</Text>
         </TouchableOpacity>
-      </View>
+      </Animated.View>
     </View>
   );
 }
