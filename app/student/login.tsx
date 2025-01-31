@@ -2,27 +2,32 @@ import { FIREBASE_AUTH } from "@/FirebaseConfig";
 import { Ionicons } from "@expo/vector-icons";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
-import { authStyles as styles } from "../styles/components/auth.styles";
-import { AuthUtils } from '../utils/auth';
-import { secureStorage } from "../utils/secureStorage";
-
 import {
-    createUserWithEmailAndPassword,
-    onAuthStateChanged,
-    signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
+  onAuthStateChanged,
 } from "firebase/auth";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { authStyles as styles } from "../styles/components/auth.styles";
 import { COLORS } from "../styles/theme";
+import { AuthUtils } from "../utils/auth";
+import { secureStorage } from "../utils/secureStorage";
 
 const Stack = createNativeStackNavigator();
 
 export default function StudentLogin() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const auth = FIREBASE_AUTH;
+  const router = useRouter();
 
   useEffect(() => {
     const loginStatus = onAuthStateChanged(auth, (user) => {
@@ -36,16 +41,15 @@ export default function StudentLogin() {
   const signIn = async () => {
     setLoading(true);
     try {
-      const response = await signInWithEmailAndPassword(auth, email, password);
-      const token = await response.user.getIdToken();
-      await secureStorage.setItem("userToken", token);
-
-      console.log(response);
-      alert("Successful signin");
-      router.push("/teacher/dashboard");
+      await AuthUtils.signInWithRole(email, password, "student");
+      const token = await FIREBASE_AUTH.currentUser?.getIdToken();
+      if (token) {
+        await secureStorage.setItem("userToken", token);
+        router.replace("/student/dashboard");
+      }
     } catch (error: any) {
-      console.log(error);
-      alert(`Sign in Failed: ${error.message}`);
+      console.error("Sign in failed:", error);
+      alert(error.message);
     } finally {
       setLoading(false);
     }
@@ -60,14 +64,14 @@ export default function StudentLogin() {
         password
       );
 
-      // Immediately create user profile with student role after signup
-      await AuthUtils.createUserProfile(response.user.uid, email, 'student');
-      
-      console.log('Student account created:', response.user.email);
-      router.replace('/student/dashboard');
-
+      await AuthUtils.createUserProfile(response.user.uid, email, "student");
+      await updateProfile(response.user, {
+        displayName: email.split("@")[0],
+      });
+      console.log("Student account created:", response.user.email);
+      router.replace("/student/dashboard");
     } catch (error: any) {
-      console.error('Sign up failed:', error);
+      console.error("Sign up failed:", error);
       alert(`Sign up Failed: ${error.message}`);
     } finally {
       setLoading(false);
@@ -84,30 +88,41 @@ export default function StudentLogin() {
 
       <View style={styles.form}>
         <TextInput
+          value={email}
           style={styles.input}
-          // value="email"
-          placeholder="Student Email"
+          placeholder="Email"
           placeholderTextColor={COLORS.text.secondary}
-          keyboardType="default"
+          keyboardType="email-address"
           autoCapitalize="none"
           onChangeText={(text) => setEmail(text)}
         />
-
         <TextInput
           style={styles.input}
-          // value="password"
           placeholder="Password"
           placeholderTextColor={COLORS.text.secondary}
-          secureTextEntry
-          onChangeText={(text) => setEmail(text)}
+          onChangeText={(text) => setPassword(text)}
+          secureTextEntry={true}
         />
-
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => router.push("/student/dashboard")}
-        >
-          <Text style={styles.buttonText}>Login</Text>
-        </TouchableOpacity>
+        {loading ? (
+          <ActivityIndicator color={COLORS.text.primary} />
+        ) : (
+          <>
+            <TouchableOpacity
+              // login Button
+              style={styles.button}
+              onPress={signIn}
+            >
+              <Text style={styles.buttonText}>Login</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              // login Button
+              style={styles.button}
+              onPress={signUp}
+            >
+              <Text style={styles.buttonText}>Create account</Text>
+            </TouchableOpacity>
+          </>
+        )}
       </View>
     </View>
   );
