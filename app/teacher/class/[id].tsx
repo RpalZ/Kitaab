@@ -15,7 +15,8 @@ import { LoadingSpinner } from '../../components/LoadingSpinner';
 interface ClassData {
   id: string;
   name: string;
-  students: StudentData[];
+  students: number;
+  studentIds: string[];
   resources: ResourceData[];
   teacherId: string;
 }
@@ -23,8 +24,10 @@ interface ClassData {
 interface StudentData {
   id: string;
   name: string;
+  email: string;
   progress: number;
   lastActive: string;
+  enrolledClasses: string[];
 }
 
 interface ResourceData {
@@ -40,6 +43,21 @@ interface ResourceData {
   uploadDate: string;
 }
 
+// Firestore schema
+interface Student {
+  id: string;
+  email: string;
+  name: string;
+  enrolledClasses: string[]; // Add this field
+}
+
+interface Class {
+  id: string;
+  name: string;
+  teacherId: string;
+  studentIds: string[]; // Add this field
+  students: number;
+}
 
 export default function ClassDetail() {
   const [activeTab, setActiveTab] = useState<'students' | 'resources'>('students');

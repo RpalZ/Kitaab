@@ -1,9 +1,9 @@
 import { db } from '@/FirebaseConfig';
 import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS } from 'app/styles/theme';
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection, query, where, getDocs, updateDoc, doc, arrayUnion } from 'firebase/firestore';
 import { useState } from 'react';
-import { Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 
 type Student = {
   id: string;
@@ -20,28 +20,59 @@ type AddStudentsModalProps = {
 export function AddStudentsModal({ visible, onClose, classId }: AddStudentsModalProps) {
   const [studentEmail, setStudentEmail] = useState('');
   const [students, setStudents] = useState<Student[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const addStudent = async () => {
     if (!studentEmail.trim()) return;
+    setLoading(true);
+    setError('');
 
     try {
-      const studentId = Date.now().toString();
-      const newStudent = {
+      // Check if student exists
+      const studentsRef = collection(db, 'students');
+      const q = query(studentsRef, where('email', '==', studentEmail.toLowerCase().trim()));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        setError('Student not found');
+        setLoading(false);
+        return;
+      }
+
+      const studentDoc = querySnapshot.docs[0];
+      const studentId = studentDoc.id;
+      const studentData = studentDoc.data();
+
+      // Check if student is already in class
+      const classRef = doc(db, 'classes', classId);
+      
+      // Update class document
+      await updateDoc(classRef, {
+        studentIds: arrayUnion(studentId),
+        students: students.length + 1
+      });
+
+      // Update student document
+      await updateDoc(doc(db, 'students', studentId), {
+        enrolledClasses: arrayUnion(classId)
+      });
+
+      // Add to local state
+      setStudents([...students, {
         id: studentId,
-        name: studentEmail.split('@')[0],
-        email: studentEmail.trim(),
-        progress: 0,
-        lastActive: new Date().toISOString()
-      };
-
-      // Add student to the class's students collection
-      await addDoc(collection(db, 'classes', classId, 'students'), newStudent);
-
-      setStudents([...students, newStudent]);
+        name: studentData.name,
+        email: studentData.email
+      }]);
+      
       setStudentEmail('');
+      setError('');
+
     } catch (error) {
       console.error('Error adding student:', error);
-      alert('Failed to add student');
+      setError('Failed to add student');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -60,18 +91,32 @@ export function AddStudentsModal({ visible, onClose, classId }: AddStudentsModal
         <View style={styles.modalView}>
           <Text style={styles.modalTitle}>Add Students</Text>
           
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          
           <View style={styles.inputContainer}>
             <TextInput
-              style={styles.input}
+              style={[styles.input, error && styles.inputError]}
               placeholder="Student Email"
               placeholderTextColor={COLORS.text.secondary}
               value={studentEmail}
-              onChangeText={setStudentEmail}
+              onChangeText={(text) => {
+                setStudentEmail(text);
+                setError('');
+              }}
               keyboardType="email-address"
               autoCapitalize="none"
+              editable={!loading}
             />
-            <TouchableOpacity style={styles.addButton} onPress={addStudent}>
-              <MaterialIcons name="add" size={24} color={COLORS.text.light} />
+            <TouchableOpacity 
+              style={[styles.addButton, loading && styles.buttonDisabled]} 
+              onPress={addStudent}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color={COLORS.text.light} />
+              ) : (
+                <MaterialIcons name="add" size={24} color={COLORS.text.light} />
+              )}
             </TouchableOpacity>
           </View>
 
@@ -180,4 +225,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-}); 
+  errorText: {
+    color: COLORS.error,
+    marginBottom: 10,
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  inputError: {
+    borderColor: COLORS.error,
+  },
+  buttonDisabled: {
+    opacity: 0.5,
+  },
+});
