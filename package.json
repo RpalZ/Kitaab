@@ -15,12 +15,14 @@
     "preset": "jest-expo"
   },
   "dependencies": {
-    "@expo/vector-icons": "^14.0.2",
+    "@expo/vector-icons": "^14.0.4",
+    "@react-native-community/datetimepicker": "8.2.0",
     "@react-native-picker/picker": "^2.11.0",
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
     "@react-navigation/native-stack": "^7.2.0",
     "@react-navigation/stack": "^7.1.1",
+    "date-fns": "^4.1.0",
     "expo": "~52.0.24",
     "expo-blur": "~14.0.1",
     "expo-constants": "~17.0.3",
@@ -52,8 +54,7 @@
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "~0.19.13",
     "react-native-webview": "13.12.5",
-    "reactjs-popup": "^2.0.6",
-    "@react-native-community/datetimepicker": "8.2.0"
+    "reactjs-popup": "^2.0.6"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
