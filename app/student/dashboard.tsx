@@ -38,7 +38,10 @@ export default function StudentDashboard() {
 
   useEffect(() => {
     const user = FIREBASE_AUTH.currentUser;
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
     setUserEmail(user.email);
     setDisplayName(user.displayName || user.email?.split("@")[0] || "Student");
@@ -46,9 +49,16 @@ export default function StudentDashboard() {
     // Fetch user's profile to get classIds
     const userRef = doc(db, 'users', user.uid);
     const unsubscribeUser = onSnapshot(userRef, async (userDoc) => {
+      if (!userDoc.exists()) {
+        console.error("User document doesn't exist");
+        setLoading(false);
+        return;
+      }
+
       const userData = userDoc.data();
       const classIds = userData?.classIds || [];
 
+<!-- <<<<<<< studentDatabaseImplementation -->
       let totalResourceCount = 0;
       let totalAssignmentCount = 0;
       const classPromises = classIds.map(async (classId: string) => {
@@ -76,6 +86,7 @@ export default function StudentDashboard() {
       setClasses(classesData);
       setTotalResources(totalResourceCount);
       setTotalAssignments(totalAssignmentCount);
+
       setLoading(false);
 
       const fetchRecentResources = async () => {

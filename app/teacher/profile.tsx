@@ -9,13 +9,14 @@ import {
   reauthenticateWithCredential,
 } from "firebase/auth";
 import { useState } from "react";
-import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Alert, ScrollView, Text, TouchableOpacity, View, StyleSheet, Linking } from "react-native";
 import { SignOutModal } from "../components/profile/SignOutModal";
 import { EditProfileModal } from "../components/profile/EditProfileModal";
 import { TeacherTabs } from "../components/TeacherTabs";
 import { profileStyles as styles } from "../styles/components/profile.styles";
 import { secureStorage } from "../utils/secureStorage";
 import { doc, setDoc } from "firebase/firestore";
+import { ChangePasswordModal } from "../components/profile/ChangePasswordModal";
 
 export default function TeacherProfile() {
   const user = FIREBASE_AUTH.currentUser;
@@ -26,6 +27,7 @@ export default function TeacherProfile() {
   const [profileVisible, setProfileVisible] = useState(false);
   const [name, setName] = useState(user?.displayName || "");
   const [email, setEmail] = useState(user?.email || "");
+  const [changePasswordVisible, setChangePasswordVisible] = useState(false);
 
   const handleSignOut = () => {
     signOut(FIREBASE_AUTH)
@@ -55,6 +57,14 @@ export default function TeacherProfile() {
     }
   };
 
+  const handleContactUs = async () => {
+    try {
+      await Linking.openURL('https://linktr.ee/Kitaab_Hackathon');
+    } catch (error) {
+      console.error('Error opening link:', error);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
@@ -76,7 +86,10 @@ export default function TeacherProfile() {
             <Text style={styles.menuItemText}>Edit Profile</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => setChangePasswordVisible(true)}
+          >
             <Text style={styles.menuItemText}>Change Password</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.menuItem}>
@@ -86,10 +99,10 @@ export default function TeacherProfile() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Support</Text>
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuItemText}>Help Center</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={handleContactUs}
+          >
             <Text style={styles.menuItemText}>Contact Us</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.menuItem}>
@@ -118,6 +131,11 @@ export default function TeacherProfile() {
           setSignOutVisible(false);
           handleSignOut();
         }}
+      />
+
+      <ChangePasswordModal
+        visible={changePasswordVisible}
+        onClose={() => setChangePasswordVisible(false)}
       />
 
       <TeacherTabs activeTab={activeTab} onTabPress={setActiveTab} />
