@@ -143,7 +143,7 @@ export function AddAssignmentModal({ visible, onClose, classId, assignmentToEdit
         fileData = await uploadFile();
       }
 
-      const assignmentData = {
+      const assignmentData: any = {
         title: title.trim(),
         description: description.trim(),
         totalPoints: parseInt(totalPoints),
@@ -151,8 +151,12 @@ export function AddAssignmentModal({ visible, onClose, classId, assignmentToEdit
         status: 'active',
         createdAt: serverTimestamp(),
         type: 'assignment',
-        file: fileData || assignmentToEdit?.file
       };
+
+      // Only add the file field if we have file data
+      if (fileData || assignmentToEdit?.file) {
+        assignmentData.file = fileData || assignmentToEdit?.file;
+      }
 
       if (assignmentToEdit) {
         await updateDoc(doc(db, 'classes', classId, 'assignments', assignmentToEdit.id), assignmentData);

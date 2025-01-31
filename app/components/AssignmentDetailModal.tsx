@@ -5,11 +5,9 @@ import { useState } from 'react';
 import { Linking, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Menu } from 'react-native-paper';
 
-type AssignmentDetailModalProps = {
+interface AssignmentDetailModalProps {
   visible: boolean;
   onClose: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
   assignment: {
     id: string;
     title: string;
@@ -22,14 +20,16 @@ type AssignmentDetailModalProps = {
       type: 'PDF' | 'Image';
     };
   };
-};
+  onEdit?: () => void;
+  onDelete?: () => void;
+}
 
 export function AssignmentDetailModal({ 
   visible, 
   onClose, 
-  onEdit, 
-  onDelete, 
-  assignment 
+  assignment,
+  onEdit,
+  onDelete 
 }: AssignmentDetailModalProps) {
   const [menuVisible, setMenuVisible] = useState(false);
 
@@ -62,23 +62,27 @@ export function AssignmentDetailModal({
                 </TouchableOpacity>
               }
             >
-              <Menu.Item 
-                onPress={() => {
-                  setMenuVisible(false);
-                  onEdit();
-                }} 
-                title="Edit" 
-                leadingIcon="edit"
-              />
-              <Menu.Item 
-                onPress={() => {
-                  setMenuVisible(false);
-                  onDelete();
-                }} 
-                title="Delete" 
-                leadingIcon="delete"
-                titleStyle={{ color: COLORS.error }}
-              />
+              {onEdit && (
+                <Menu.Item 
+                  onPress={() => {
+                    setMenuVisible(false);
+                    onEdit();
+                  }} 
+                  title="Edit" 
+                  leadingIcon="edit"
+                />
+              )}
+              {onDelete && (
+                <Menu.Item 
+                  onPress={() => {
+                    setMenuVisible(false);
+                    onDelete();
+                  }} 
+                  title="Delete" 
+                  leadingIcon="delete"
+                  titleStyle={{ color: COLORS.error }}
+                />
+              )}
             </Menu>
           </View>
 
@@ -119,6 +123,21 @@ export function AssignmentDetailModal({
               </View>
             )}
           </ScrollView>
+
+          {(onEdit || onDelete) && (
+            <View style={styles.buttonContainer}>
+              {onEdit && (
+                <TouchableOpacity style={styles.editButton} onPress={onEdit}>
+                  <Text style={styles.buttonText}>Edit</Text>
+                </TouchableOpacity>
+              )}
+              {onDelete && (
+                <TouchableOpacity style={styles.deleteButton} onPress={onDelete}>
+                  <Text style={[styles.buttonText, styles.deleteText]}>Delete</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
         </View>
       </View>
     </Modal>
@@ -193,5 +212,28 @@ const styles = StyleSheet.create({
     color: COLORS.text.primary,
     marginLeft: 10,
     fontSize: 16,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+  },
+  editButton: {
+    backgroundColor: COLORS.primary,
+    padding: 15,
+    borderRadius: 10,
+  },
+  deleteButton: {
+    backgroundColor: COLORS.error,
+    padding: 15,
+    borderRadius: 10,
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: COLORS.text.primary,
+  },
+  deleteText: {
+    color: COLORS.text.primary,
   },
 }); 

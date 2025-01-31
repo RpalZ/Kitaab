@@ -2,9 +2,11 @@ import { db } from '@/FirebaseConfig';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from 'app/styles/theme';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { collection, doc, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, doc, onSnapshot, query, updateDoc, where } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { AssignmentDetailModal } from '../../components/AssignmentDetailModal';
+import { AssignmentSubmissionModal } from '../../components/AssignmentSubmissionModal';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 
 export default function StudentDetail() {
@@ -14,6 +16,9 @@ export default function StudentDetail() {
   const [progress, setProgress] = useState<StudentClassProgress | null>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
+  const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
+  const [viewingAssignment, setViewingAssignment] = useState<Assignment | null>(null);
 
   useEffect(() => {
     if (!studentId || !classId) return;
@@ -52,6 +57,17 @@ export default function StudentDetail() {
       unsubAssignments();
     };
   }, [studentId, classId]);
+
+  const handleGrade = async (grade: number, feedback: string) => {
+    if (!selectedAssignment || !studentId || !classId) return;
+
+    const studentRef = doc(db, 'classes', classId as string, 'students', studentId as string);
+    await updateDoc(studentRef, {
+      [`assignments.${selectedAssignment.id}.grade`]: grade,
+      [`assignments.${selectedAssignment.id}.feedback`]: feedback,
+      [`assignments.${selectedAssignment.id}.gradedAt`]: new Date(),
+    });
+  };
 
   if (loading) {
     return <LoadingSpinner />;
@@ -107,56 +123,100 @@ export default function StudentDetail() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Assignments</Text>
-          {assignments.map(assignment => {
-            const studentProgress = progress.assignments[assignment.id] || { 
-              status: 'pending',
-              grade: undefined,
-              submittedAt: undefined,
-              feedback: undefined
-            };
+          {assignments.length === 0 ? (
+            <Text style={styles.noAssignments}>No assignments yet</Text>
+          ) : (
+            assignments.map(assignment => {
+              const studentProgress = progress.assignments[assignment.id] || { 
+                status: 'pending',
+                grade: undefined,
+                submittedAt: undefined,
+                feedback: undefined
+              };
 
-            return (
-              <View key={assignment.id} style={styles.assignmentCard}>
-                <View style={styles.assignmentHeader}>
-                  <Text style={styles.assignmentTitle}>{assignment.title}</Text>
-                  <View style={[
-                    styles.statusBadge,
-                    { backgroundColor: 
-                      studentProgress.status === 'completed' ? COLORS.success :
-                      studentProgress.status === 'late' ? COLORS.error :
-                      COLORS.warning
+              return (
+                <TouchableOpacity
+                  key={assignment.id}
+                  style={[
+                    styles.assignmentCard,
+                    studentProgress.status === 'completed' && styles.completedCard
+                  ]}
+                  onPress={() => {
+                    if (studentProgress.status === 'completed') {
+                      setSelectedAssignment(assignment);
+                      setSelectedSubmission({
+                        studentName: student.displayName,
+                        submittedAt: new Date(studentProgress.submittedAt),
+                        status: studentProgress.status,
+                        comment: studentProgress.comment,
+                        file: studentProgress.file,
+                        grade: studentProgress.grade,
+                        feedback: studentProgress.feedback,
+                      });
+                    } else {
+                      setViewingAssignment(assignment);
                     }
-                  ]}>
-                    <Text style={styles.statusText}>
-                      {studentProgress.status.charAt(0).toUpperCase() + studentProgress.status.slice(1)}
-                    </Text>
+                  }}
+                >
+                  <View style={styles.assignmentHeader}>
+                    <Text style={styles.assignmentTitle}>{assignment.title}</Text>
+                    <View style={[
+                      styles.statusBadge,
+                      { backgroundColor: 
+                        studentProgress.status === 'completed' ? COLORS.success :
+                        studentProgress.status === 'late' ? COLORS.error :
+                        COLORS.warning
+                      }
+                    ]}>
+                      <Text style={styles.statusText}>
+                        {studentProgress.status.charAt(0).toUpperCase() + studentProgress.status.slice(1)}
+                      </Text>
+                    </View>
                   </View>
-                </View>
 
-                <Text style={styles.assignmentType}>
-                  {assignment.type.charAt(0).toUpperCase() + assignment.type.slice(1)}
-                </Text>
+                  {assignment.description && (
+                    <Text style={styles.description} numberOfLines={2}>
+                      {assignment.description}
+                    </Text>
+                  )}
 
-                {studentProgress.grade !== undefined && (
-                  <Text style={styles.grade}>
-                    Grade: {studentProgress.grade}/{assignment.totalPoints}
-                  </Text>
-                )}
-
-                {studentProgress.feedback && (
-                  <Text style={styles.feedback}>
-                    Feedback: {studentProgress.feedback}
-                  </Text>
-                )}
-
-                <Text style={styles.dueDate}>
-                  Due: {new Date(assignment.dueDate.toDate()).toLocaleDateString()}
-                </Text>
-              </View>
-            );
-          })}
+                  <View style={styles.footer}>
+                    <Text style={styles.dueDate}>
+                      Due: {new Date(assignment.dueDate.toDate()).toLocaleDateString()}
+                    </Text>
+                    {studentProgress.grade !== undefined && (
+                      <Text style={styles.grade}>
+                        Grade: {studentProgress.grade}/{assignment.totalPoints}
+                      </Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              );
+            })
+          )}
         </View>
       </ScrollView>
+
+      {viewingAssignment && (
+        <AssignmentDetailModal
+          visible={!!viewingAssignment}
+          onClose={() => setViewingAssignment(null)}
+          assignment={viewingAssignment}
+        />
+      )}
+
+      {selectedSubmission && selectedAssignment && (
+        <AssignmentSubmissionModal
+          visible={!!selectedSubmission}
+          onClose={() => {
+            setSelectedAssignment(null);
+            setSelectedSubmission(null);
+          }}
+          submission={selectedSubmission}
+          totalPoints={selectedAssignment.totalPoints}
+          onGrade={handleGrade}
+        />
+      )}
     </View>
   );
 }
@@ -264,6 +324,27 @@ const styles = StyleSheet.create({
   dueDate: {
     fontSize: 12,
     color: COLORS.text.secondary,
+    marginTop: 8,
+  },
+  completedCard: {
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.success,
+  },
+  noAssignments: {
+    color: COLORS.text.secondary,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    padding: 16,
+  },
+  description: {
+    fontSize: 14,
+    color: COLORS.text.secondary,
+    marginVertical: 8,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginTop: 8,
   },
 }); 

@@ -90,49 +90,87 @@ export default function StudentClasses() {
 
   return (
     <View style={styles.container}>
-      <StudentTabs activeTab="classes" onTabPress={setActiveTab} />
-      <ScrollView style={styles.content}>
-        {classes.map((classItem) => (
-          <TouchableOpacity
-            key={classItem.id}
-            style={styles.classCard}
-            onPress={() => router.push(`/student/class/${classItem.id}`)}
-          >
-            <View style={styles.classHeader}>
-              <Text style={styles.className}>{classItem.name}</Text>
-              <Text style={styles.teacherName}>{classItem.teacher}</Text>
-            </View>
-
-            <View style={styles.classInfo}>
-              <View style={styles.infoItem}>
-                <MaterialIcons name="assignment" size={20} color={COLORS.text.secondary} />
-                <Text style={styles.infoText}>{classItem.assignmentsDue} assignments due</Text>
-              </View>
-              
-              {classItem.nextDeadline && (
-                <View style={styles.infoItem}>
-                  <MaterialIcons name="event" size={20} color={COLORS.text.secondary} />
-                  <Text style={styles.infoText}>
-                    Next deadline: {new Date(classItem.nextDeadline).toLocaleDateString()}
-                  </Text>
+      <StudentTabs activeTab={activeTab} onTabPress={setActiveTab} />
+      <View style={styles.content}>
+        {activeTab === 'classes' ? (
+          <ScrollView showsVerticalScrollIndicator={false}>
+            {classes.map((classItem) => (
+              <TouchableOpacity
+                key={classItem.id}
+                style={styles.classCard}
+                onPress={() => router.push(`/student/class/${classItem.id}`)}
+              >
+                <View style={styles.classHeader}>
+                  <Text style={styles.className}>{classItem.name}</Text>
+                  <Text style={styles.teacherName}>{classItem.teacher}</Text>
                 </View>
-              )}
-            </View>
 
-            <View style={styles.progressContainer}>
-              <View style={styles.progressBar}>
-                <View 
-                  style={[
-                    styles.progressFill, 
-                    { width: `${classItem.progress}%` }
-                  ]} 
-                />
+                <View style={styles.classInfo}>
+                  <View style={styles.infoItem}>
+                    <MaterialIcons name="assignment" size={20} color={COLORS.text.secondary} />
+                    <Text style={styles.infoText}>{classItem.assignmentsDue} assignments due</Text>
+                  </View>
+                  
+                  {classItem.nextDeadline && (
+                    <View style={styles.infoItem}>
+                      <MaterialIcons name="event" size={20} color={COLORS.text.secondary} />
+                      <Text style={styles.infoText}>
+                        Next deadline: {new Date(classItem.nextDeadline).toLocaleDateString()}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
+                <View style={styles.progressContainer}>
+                  <View style={styles.progressBar}>
+                    <View 
+                      style={[
+                        styles.progressFill, 
+                        { width: `${classItem.progress}%` }
+                      ]} 
+                    />
+                  </View>
+                  <Text style={styles.progressText}>{classItem.progress}% Complete</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        ) : activeTab === 'assignments' ? (
+          <ScrollView showsVerticalScrollIndicator={false}>
+            {classes.map((classItem) => (
+              <View key={classItem.id} style={styles.assignmentsSection}>
+                <Text style={styles.className}>{classItem.name}</Text>
+                {classItem.assignmentsDue > 0 ? (
+                  <View style={styles.assignmentCard}>
+                    <View style={styles.assignmentHeader}>
+                      <Text style={styles.assignmentCount}>
+                        {classItem.assignmentsDue} {classItem.assignmentsDue === 1 ? 'Assignment' : 'Assignments'} Due
+                      </Text>
+                      {classItem.nextDeadline && (
+                        <Text style={styles.nextDeadline}>
+                          Next due: {new Date(classItem.nextDeadline).toLocaleDateString()}
+                        </Text>
+                      )}
+                    </View>
+                    <TouchableOpacity 
+                      style={styles.viewButton}
+                      onPress={() => router.push(`/student/class/${classItem.id}`)}
+                    >
+                      <Text style={styles.viewButtonText}>View Assignments</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <Text style={styles.noAssignments}>No assignments due</Text>
+                )}
               </View>
-              <Text style={styles.progressText}>{classItem.progress}% Complete</Text>
-            </View>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+            ))}
+          </ScrollView>
+        ) : (
+          <ScrollView>
+            {/* Resources tab content */}
+          </ScrollView>
+        )}
+      </View>
     </View>
   );
 }
@@ -140,29 +178,17 @@ export default function StudentClasses() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
-    padding: 20,
+    backgroundColor: COLORS.tertiary,
   },
-  scrollContent: {
-    paddingTop: 60,
-  },
-  header: {
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: COLORS.text.primary,
-  },
-  classesContainer: {
-    gap: 16,
+  content: {
+    flex: 1,
+    padding: 16,
   },
   classCard: {
     backgroundColor: COLORS.card.primary,
     padding: 20,
     borderRadius: 12,
     marginBottom: 16,
-    minHeight: 120,  // Match teacher's card height
   },
   classHeader: {
     flexDirection: 'row',
@@ -174,22 +200,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: COLORS.text.primary,
-  },
-  badge: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  badgeText: {
-    color: COLORS.white,
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  teacherInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
   },
   teacherName: {
     fontSize: 16,
@@ -234,9 +244,6 @@ const styles = StyleSheet.create({
     color: COLORS.text.secondary,
     marginLeft: 8,
   },
-  content: {
-    paddingTop: 20,
-  },
   classInfo: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -252,4 +259,46 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginLeft: 8,
   },
+  assignmentsSection: {
+    marginBottom: 20,
+    backgroundColor: COLORS.card.primary,
+    borderRadius: 10,
+    padding: 15,
+  },
+  assignmentCard: {
+    backgroundColor: COLORS.card.secondary,
+    borderRadius: 8,
+    padding: 12,
+  },
+  assignmentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  assignmentCount: {
+    fontSize: 16,
+    color: COLORS.text.primary,
+    fontWeight: '500',
+  },
+  nextDeadline: {
+    fontSize: 14,
+    color: COLORS.text.secondary,
+  },
+  viewButton: {
+    backgroundColor: COLORS.primary,
+    padding: 8,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  viewButtonText: {
+    color: COLORS.text.light,
+    fontWeight: '500',
+  },
+  noAssignments: {
+    color: COLORS.text.secondary,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    padding: 10,
+  }
 }); 

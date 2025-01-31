@@ -21,6 +21,8 @@ interface StudentClassProgress {
       grade?: number;
       submittedAt?: Timestamp;
       feedback?: string;
+      comment: string;
+      file: any;
     }
   }
 }
