@@ -17,25 +17,16 @@ import { ProtectedRoute } from '../components/ProtectedRoute';
 import { TeacherTabs } from "../components/TeacherTabs";
 import { dashboardStyles } from "../styles/components/forum.styles";
 import { db, storage } from "../../FirebaseConfig";
-import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, updateDoc } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL, getStorage} from "firebase/storage";
+import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, updateDoc, onSnapshot, doc, increment } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL, getStorage } from "firebase/storage";
 import * as WebBrowser from 'expo-web-browser';
 import { COLORS } from "../styles/theme";
 import { globalStyles } from 'app/styles/global';
-
-type Resource = {
-  createdAt: any; 
-  id?:string;
-  title: string;
-  description: string;
-  file?: {
-    name: string;
-    uri: string;
-    type: string;
-  };
-};
-
-type TabType = 'resources' | 'posts';
+import { Post, Comment, PostFile, Resource, TabType } from '../types/forum';
+import { FIREBASE_AUTH } from '../../FirebaseConfig';
+import { PostCard } from '../components/PostCard';
+import { CreatePostModal } from '../components/CreatePostModal';
+import { PostDetailModal } from '../components/PostDetailModal';
 
 export default function TeacherForum() {
   const [activeTab, setActiveTab] = useState<TabType>('resources');
@@ -47,6 +38,14 @@ export default function TeacherForum() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<DocumentPicker.DocumentPickerResult[]>([]);
+  const [newComment, setNewComment] = useState('');
+  const [replyingTo, setReplyingTo] = useState<Comment | null>(null);
+  const [isCreatePostModalVisible, setIsCreatePostModalVisible] = useState(false);
+  const [isPostDetailModalVisible, setIsPostDetailModalVisible] = useState(false);
 
   const pickDocument = async () => {
     try {
@@ -78,7 +77,7 @@ export default function TeacherForum() {
       const resource: Resource = {
         title: title.trim(),
         description: desc.trim(),
-        createdAt: undefined
+        createdAt: null
       };
 
       const docRef = await addDoc(collection(db, "posts"), {
@@ -241,6 +240,176 @@ export default function TeacherForum() {
     resource.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Fetch posts in real-time
+  useEffect(() => {
+    const q = query(collection(db, "teacher_posts"), orderBy("createdAt", "desc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetchedPosts: Post[] = [];
+      snapshot.forEach((doc) => {
+        fetchedPosts.push({ id: doc.id, ...doc.data() } as Post);
+      });
+      setPosts(fetchedPosts);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Fetch comments when a post is selected
+  useEffect(() => {
+    if (!selectedPost) return;
+
+    const q = query(
+      collection(db, "teacher_posts", selectedPost.id, "comments"),
+      orderBy("createdAt", "desc")
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetchedComments: Comment[] = [];
+      snapshot.forEach((doc) => {
+        fetchedComments.push({ id: doc.id, ...doc.data() } as Comment);
+      });
+      setComments(organizeComments(fetchedComments));
+    });
+
+    return () => unsubscribe();
+  }, [selectedPost]);
+
+  const organizeComments = (flatComments: Comment[]): Comment[] => {
+    const commentMap = new Map<string, Comment>();
+    const topLevel: Comment[] = [];
+
+    // First pass: create map of all comments
+    flatComments.forEach(comment => {
+      commentMap.set(comment.id, { ...comment, replies: [] });
+    });
+
+    // Second pass: organize into hierarchy
+    flatComments.forEach(comment => {
+      const commentWithReplies = commentMap.get(comment.id)!;
+      if (comment.parentId) {
+        const parent = commentMap.get(comment.parentId);
+        if (parent) {
+          parent.replies?.push(commentWithReplies);
+        }
+      } else {
+        topLevel.push(commentWithReplies);
+      }
+    });
+
+    return topLevel;
+  };
+
+  const handleCreatePost = async (
+    title: string, 
+    content: string, 
+    selectedFiles: DocumentPicker.DocumentPickerResult[]
+  ) => {
+    if (!title.trim()) {
+      Alert.alert('Error', 'Title is required');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const user = FIREBASE_AUTH.currentUser;
+      if (!user) throw new Error('User not authenticated');
+
+      const files = [];
+      
+      // Upload files if any
+      for (const fileResult of selectedFiles) {
+        if (!fileResult.assets?.[0]) continue;
+        
+        const asset = fileResult.assets[0];
+        if (!asset.uri) {
+          console.warn('Skipping file upload: missing URI');
+          continue;
+        }
+
+        try {
+          const fileName = asset.name || `file_${Date.now()}`;
+          const fileRef = ref(storage, `teacher_posts/files/${fileName}`);
+          
+          const response = await fetch(asset.uri);
+          if (!response.ok) {
+            throw new Error(`Failed to fetch file: ${response.statusText}`);
+          }
+          const blob = await response.blob();
+          
+          await uploadBytes(fileRef, blob);
+          const downloadUrl = await getDownloadURL(fileRef);
+          
+          files.push({
+            name: fileName,
+            uri: downloadUrl,
+            type: asset.mimeType || 'application/octet-stream',
+          });
+        } catch (fileError) {
+          console.error('Error uploading file:', fileError);
+          Alert.alert('Warning', `Failed to upload file: ${asset.name}`);
+        }
+      }
+
+      const postData: Omit<Post, 'id'> = {
+        authorId: user.uid,
+        authorName: user.displayName || 'Anonymous Teacher',
+        title: title.trim(),
+        content: content.trim(),
+        createdAt: serverTimestamp(),
+        files,
+        commentCount: 0,
+      };
+
+      await addDoc(collection(db, "teacher_posts"), postData);
+      setIsCreatePostModalVisible(false);
+      Alert.alert('Success', 'Post created successfully!');
+    } catch (error) {
+      console.error('Error creating post:', error);
+      Alert.alert('Error', 'Failed to create post');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleAddComment = async (content: string, parentId: string | null = null) => {
+    if (!selectedPost) return;
+    
+    setIsSubmitting(true);
+    try {
+      const user = FIREBASE_AUTH.currentUser;
+      if (!user) throw new Error('User not authenticated');
+
+      const commentData: Omit<Comment, 'id'> = {
+        postId: selectedPost.id,
+        parentId,
+        authorId: user.uid,
+        authorName: user.displayName || 'Anonymous Teacher',
+        content: content.trim(),
+        createdAt: serverTimestamp(),
+      };
+
+      await addDoc(collection(db, "teacher_posts", selectedPost.id, "comments"), commentData);
+      
+      // Update comment count
+      const postRef = doc(db, "teacher_posts", selectedPost.id);
+      await updateDoc(postRef, {
+        commentCount: increment(1)
+      });
+
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      Alert.alert('Error', 'Failed to add comment');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Filter posts based on search query
+  const filteredPosts = posts.filter(post =>
+    post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    post.content.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <ProtectedRoute requiredRole="teacher">
       <View style={styles.container}>
@@ -345,17 +514,32 @@ export default function TeacherForum() {
             </View>
 
             <ScrollView style={[styles.scrollContainer, globalStyles.scrollViewStyle]}>
-              <View style={styles.emptyStateContainer}>
-                <Ionicons name="chatbubbles-outline" size={48} color={COLORS.text.secondary} />
-                <Text style={styles.emptyStateText}>
-                  Teacher posts coming soon!
-                </Text>
-              </View>
+              {filteredPosts.length === 0 ? (
+                <View style={styles.emptyStateContainer}>
+                  <Ionicons name="chatbubbles-outline" size={48} color={COLORS.text.secondary} />
+                  <Text style={styles.emptyStateText}>
+                    {searchQuery.length > 0 
+                      ? "No posts found matching your search"
+                      : "No posts available yet"}
+                  </Text>
+                </View>
+              ) : (
+                filteredPosts.map((post) => (
+                  <PostCard
+                    key={post.id}
+                    post={post}
+                    onPress={() => {
+                      setSelectedPost(post);
+                      setIsPostDetailModalVisible(true);
+                    }}
+                  />
+                ))
+              )}
             </ScrollView>
 
             <TouchableOpacity
               style={styles.addButton}
-              onPress={() => {/* TODO: Implement post creation */}}
+              onPress={() => setIsCreatePostModalVisible(true)}
             >
               <Ionicons name="add" size={24} color={COLORS.text.light} />
             </TouchableOpacity>
@@ -424,6 +608,26 @@ export default function TeacherForum() {
             </View>
           </View>
         </Modal>
+
+        {/* Create Post Modal */}
+        <CreatePostModal
+          visible={isCreatePostModalVisible}
+          onClose={() => setIsCreatePostModalVisible(false)}
+          onSubmit={handleCreatePost}
+          isSubmitting={isSubmitting}
+        />
+
+        {/* Post Detail Modal */}
+        <PostDetailModal
+          visible={isPostDetailModalVisible}
+          onClose={() => {
+            setIsPostDetailModalVisible(false);
+            setSelectedPost(null);
+          }}
+          post={selectedPost}
+          onAddComment={handleAddComment}
+          isSubmitting={isSubmitting}
+        />
 
         <TeacherTabs activeTab={activeTab} onTabPress={setActiveTab} />
       </View>
