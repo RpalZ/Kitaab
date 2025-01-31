@@ -4,10 +4,22 @@ import { COLORS } from 'app/styles/theme';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { collection, doc, onSnapshot, query, updateDoc, where } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { AssignmentDetailModal } from '../../components/AssignmentDetailModal';
 import { AssignmentSubmissionModal } from '../../components/AssignmentSubmissionModal';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
+
+const calculateOverallProgress = (assignments: Assignment[], progress: StudentClassProgress) => {
+  const totalAssignments = assignments.length;
+  if (totalAssignments === 0) return 0;
+
+  // Count all completed assignments (submitted), regardless of grade
+  const completedAssignments = Object.values(progress.assignments).filter(
+    a => a.status === 'completed'
+  ).length;
+
+  return Math.round((completedAssignments / totalAssignments) * 100);
+};
 
 export default function StudentDetail() {
   const { id: studentId, classId } = useLocalSearchParams();
@@ -59,14 +71,38 @@ export default function StudentDetail() {
   }, [studentId, classId]);
 
   const handleGrade = async (grade: number, feedback: string) => {
-    if (!selectedAssignment || !studentId || !classId) return;
+    if (!selectedAssignment || !studentId || !classId || !progress) return;
 
-    const studentRef = doc(db, 'classes', classId as string, 'students', studentId as string);
-    await updateDoc(studentRef, {
-      [`assignments.${selectedAssignment.id}.grade`]: grade,
-      [`assignments.${selectedAssignment.id}.feedback`]: feedback,
-      [`assignments.${selectedAssignment.id}.gradedAt`]: new Date(),
-    });
+    try {
+      const studentRef = doc(db, 'classes', classId as string, 'students', studentId as string);
+      
+      // Calculate new overall progress (though it won't change since we're only grading)
+      const updatedProgress = {
+        ...progress,
+        assignments: {
+          ...progress.assignments,
+          [selectedAssignment.id]: {
+            ...progress.assignments[selectedAssignment.id],
+            grade,
+            feedback,
+            gradedAt: new Date(),
+          }
+        }
+      };
+      
+      const newOverallProgress = calculateOverallProgress(assignments, updatedProgress);
+
+      await updateDoc(studentRef, {
+        [`assignments.${selectedAssignment.id}.grade`]: grade,
+        [`assignments.${selectedAssignment.id}.feedback`]: feedback,
+        [`assignments.${selectedAssignment.id}.gradedAt`]: new Date(),
+        overallProgress: newOverallProgress,
+      });
+
+    } catch (error) {
+      console.error('Error updating grade:', error);
+      alert('Failed to update grade');
+    }
   };
 
   if (loading) {
@@ -139,13 +175,14 @@ export default function StudentDetail() {
                   key={assignment.id}
                   style={[
                     styles.assignmentCard,
-                    studentProgress.status === 'completed' && styles.completedCard
+                    studentProgress.status === 'completed' && styles.completedCard,
+                    studentProgress.status === 'late' && styles.lateCard
                   ]}
                   onPress={() => {
                     if (studentProgress.status === 'completed') {
                       setSelectedAssignment(assignment);
                       setSelectedSubmission({
-                        studentName: student.displayName,
+                        studentName: student.displayName || student.email,
                         submittedAt: new Date(studentProgress.submittedAt),
                         status: studentProgress.status,
                         comment: studentProgress.comment,
@@ -159,7 +196,9 @@ export default function StudentDetail() {
                   }}
                 >
                   <View style={styles.assignmentHeader}>
-                    <Text style={styles.assignmentTitle}>{assignment.title}</Text>
+                    <Text style={styles.assignmentTitle} numberOfLines={2}>
+                      {assignment.title}
+                    </Text>
                     <View style={[
                       styles.statusBadge,
                       { backgroundColor: 
@@ -186,7 +225,7 @@ export default function StudentDetail() {
                     </Text>
                     {studentProgress.grade !== undefined && (
                       <Text style={styles.grade}>
-                        Grade: {studentProgress.grade}/{assignment.totalPoints}
+                        {studentProgress.grade}/{assignment.totalPoints}
                       </Text>
                     )}
                   </View>
@@ -229,6 +268,8 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    // marginTop: 20,
+    paddingTop: Platform.OS === 'ios' ?  50: 16,
     padding: 16,
     backgroundColor: COLORS.primary,
   },
@@ -248,6 +289,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 24,
+    gap: 8,
   },
   statBox: {
     flex: 1,
@@ -255,7 +297,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.card.primary,
     padding: 16,
     borderRadius: 12,
-    marginHorizontal: 4,
   },
   statNumber: {
     fontSize: 24,
@@ -281,11 +322,13 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     marginBottom: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.warning,
   },
   assignmentHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 8,
   },
   assignmentTitle: {
@@ -293,58 +336,49 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: COLORS.text.primary,
     flex: 1,
+    marginRight: 8,
   },
   statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
-    marginLeft: 8,
   },
   statusText: {
     color: COLORS.text.light,
     fontSize: 12,
     fontWeight: '500',
   },
-  assignmentType: {
+  description: {
     fontSize: 14,
     color: COLORS.text.secondary,
-    marginBottom: 4,
+    marginBottom: 8,
   },
-  grade: {
-    fontSize: 14,
-    color: COLORS.text.primary,
-    marginTop: 8,
-  },
-  feedback: {
-    fontSize: 14,
-    color: COLORS.text.secondary,
-    marginTop: 8,
-    fontStyle: 'italic',
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   dueDate: {
     fontSize: 12,
     color: COLORS.text.secondary,
-    marginTop: 8,
+  },
+  grade: {
+    fontSize: 14,
+    color: COLORS.text.primary,
+    fontWeight: '500',
   },
   completedCard: {
     borderLeftWidth: 4,
     borderLeftColor: COLORS.success,
+  },
+  lateCard: {
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.error,
   },
   noAssignments: {
     color: COLORS.text.secondary,
     fontStyle: 'italic',
     textAlign: 'center',
     padding: 16,
-  },
-  description: {
-    fontSize: 14,
-    color: COLORS.text.secondary,
-    marginVertical: 8,
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 8,
   },
 }); 

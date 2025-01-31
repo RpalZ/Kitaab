@@ -1,7 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS } from 'app/styles/theme';
 import { useState } from 'react';
-import { Linking, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Keyboard, Linking, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 
 interface AssignmentSubmissionModalProps {
   visible: boolean;
@@ -70,47 +70,67 @@ export function AssignmentSubmissionModal({
       transparent={true}
       visible={visible}
       onRequestClose={onClose}
+      statusBarTranslucent
     >
-      <View style={styles.centeredView}>
-        <View style={styles.modalView}>
-          <View style={styles.header}>
-            <Text style={styles.title}>{submission.studentName}'s Submission</Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <MaterialIcons name="close" size={24} color={COLORS.text.primary} />
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView style={styles.content}>
-            <View style={styles.infoSection}>
-              <Text style={styles.label}>Submitted</Text>
-              <Text style={styles.value}>
-                {submission.submittedAt.toLocaleString()}
+      <TouchableOpacity 
+        style={styles.centeredView} 
+        activeOpacity={1} 
+        onPress={onClose}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <TouchableOpacity 
+            activeOpacity={1} 
+            onPress={e => e.stopPropagation()}
+            style={styles.modalView}
+          >
+            <View style={styles.header}>
+              <Text style={styles.title} numberOfLines={2}>
+                {submission.studentName}'s Submission
               </Text>
+              <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                <MaterialIcons name="close" size={24} color={COLORS.text.primary} />
+              </TouchableOpacity>
             </View>
 
-            {submission.comment && (
+            <ScrollView 
+              style={styles.content}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.contentContainer}
+            >
               <View style={styles.infoSection}>
-                <Text style={styles.label}>Student Comment</Text>
-                <Text style={styles.value}>{submission.comment}</Text>
+                <Text style={styles.label}>Submitted</Text>
+                <Text style={styles.value}>
+                  {submission.submittedAt.toLocaleString('en-US', {
+                    dateStyle: 'medium',
+                    timeStyle: 'short'
+                  })}
+                </Text>
               </View>
-            )}
 
-            {submission.file && (
-              <View style={styles.infoSection}>
-                <Text style={styles.label}>Submitted File</Text>
-                <TouchableOpacity 
-                  style={styles.fileButton}
-                  onPress={() => handleOpenFile(submission.file!.url)}
-                >
-                  <MaterialIcons 
-                    name={submission.file.type.includes('pdf') ? 'picture-as-pdf' : 'image'} 
-                    size={24} 
-                    color={COLORS.primary} 
-                  />
-                  <Text style={styles.fileName}>{submission.file.filename}</Text>
-                </TouchableOpacity>
-              </View>
-            )}
+              {submission.comment && (
+                <View style={styles.infoSection}>
+                  <Text style={styles.label}>Student Comment</Text>
+                  <Text style={styles.value}>{submission.comment}</Text>
+                </View>
+              )}
+
+              {submission.file && (
+                <View style={styles.infoSection}>
+                  <Text style={styles.label}>Submitted File</Text>
+                  <TouchableOpacity 
+                    style={styles.fileButton}
+                    onPress={() => handleOpenFile(submission.file!.url)}
+                  >
+                    <MaterialIcons 
+                      name={submission.file.type.includes('pdf') ? 'picture-as-pdf' : 'image'} 
+                      size={24} 
+                      color={COLORS.primary} 
+                    />
+                    <Text style={styles.fileName}>{submission.file.filename}</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </ScrollView>
 
             {onGrade && (
               <View style={styles.gradingSection}>
@@ -122,16 +142,20 @@ export function AssignmentSubmissionModal({
                   keyboardType="number-pad"
                   placeholder="Enter grade"
                   placeholderTextColor={COLORS.text.secondary}
+                  returnKeyType="done"
+                  onSubmitEditing={Keyboard.dismiss}
                 />
 
                 <Text style={styles.label}>Feedback</Text>
                 <TextInput
-                  style={[styles.feedbackInput]}
+                  style={styles.feedbackInput}
                   value={feedback}
                   onChangeText={setFeedback}
                   placeholder="Enter feedback"
                   placeholderTextColor={COLORS.text.secondary}
                   multiline
+                  returnKeyType="done"
+                  blurOnSubmit={true}
                 />
 
                 <TouchableOpacity
@@ -143,9 +167,9 @@ export function AssignmentSubmissionModal({
                 </TouchableOpacity>
               </View>
             )}
-          </ScrollView>
-        </View>
-      </View>
+          </TouchableOpacity>
+        </TouchableWithoutFeedback>
+      </TouchableOpacity>
     </Modal>
   );
 }
@@ -156,13 +180,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    padding: 16,
   },
   modalView: {
-    width: '90%',
-    maxHeight: '80%',
+    width: '100%',
+    maxHeight: '90%',
     backgroundColor: COLORS.card.primary,
     borderRadius: 20,
-    padding: 20,
+    padding: 16,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -176,27 +201,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 12,
   },
   title: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: COLORS.text.primary,
     flex: 1,
+    marginRight: 8,
   },
   closeButton: {
-    padding: 5,
+    padding: 4,
   },
   content: {
-    flex: 1,
+    maxHeight: '60%',
+  },
+  contentContainer: {
+    paddingBottom: 16,
   },
   infoSection: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   label: {
     fontSize: 14,
     color: COLORS.text.secondary,
-    marginBottom: 5,
+    marginBottom: 4,
   },
   value: {
     fontSize: 16,
@@ -206,42 +235,47 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.card.secondary,
-    padding: 15,
+    padding: 12,
     borderRadius: 10,
+    marginTop: 4,
   },
   fileName: {
     color: COLORS.text.primary,
-    marginLeft: 10,
-    fontSize: 16,
+    marginLeft: 8,
+    fontSize: 14,
+    flex: 1,
   },
   gradingSection: {
-    marginTop: 20,
-    gap: 10,
+    marginTop: 16,
+    gap: 8,
   },
   gradeInput: {
     backgroundColor: COLORS.card.secondary,
     borderRadius: 10,
     padding: 12,
     color: COLORS.text.primary,
+    fontSize: 14,
   },
   feedbackInput: {
     backgroundColor: COLORS.card.secondary,
     borderRadius: 10,
     padding: 12,
     color: COLORS.text.primary,
-    minHeight: 100,
+    minHeight: 80,
     textAlignVertical: 'top',
+    fontSize: 14,
   },
   gradeButton: {
     backgroundColor: COLORS.primary,
     padding: 12,
     borderRadius: 10,
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 8,
   },
   gradeButtonText: {
     color: COLORS.text.light,
     fontWeight: '500',
+    fontSize: 14,
   },
   disabledButton: {
     opacity: 0.5,

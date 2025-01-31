@@ -1,8 +1,8 @@
 import { db, FIREBASE_AUTH } from '@/FirebaseConfig';
 import { useRouter } from "expo-router";
-import { collection, doc, getDoc, getDocs, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, doc, getDoc, onSnapshot, query, where } from 'firebase/firestore';
 import { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { AssignmentViewModal } from '../components/AssignmentViewModal';
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { StudentTabs } from "../components/StudentTabs";
@@ -38,6 +38,9 @@ export default function StudentAssignments() {
       
       let allAssignments: AssignmentWithClass[] = [];
 
+      // Create an array to store all unsubscribe functions
+      const unsubscribes: (() => void)[] = [];
+
       // Fetch assignments from each class
       for (const classId of classIds) {
         try {
@@ -47,44 +50,57 @@ export default function StudentAssignments() {
           const className = classDoc.data()?.name || 'Unknown Class';
 
           // Get student's progress in this class
-          const progressDocRef = doc(db, 'classes', classId, 'students', user.uid);
-          const progressDoc = await getDoc(progressDocRef);
-          const progressData = progressDoc.data();
+          const progressRef = doc(db, 'classes', classId, 'students', user.uid);
+          const unsubProgress = onSnapshot(progressRef, (progressDoc) => {
+            const progressData = progressDoc.data();
+            const assignmentsProgress = progressData?.assignments || {};
 
-          // Get assignments
-          const assignmentsQuery = query(
-            collection(db, 'classes', classId, 'assignments'),
-            where('status', '==', 'active')
-          );
-          const assignmentsSnap = await getDocs(assignmentsQuery);
-          
-          const classAssignments = assignmentsSnap.docs.map(doc => {
-            const data = doc.data();
-            const progress = progressData?.assignments?.[doc.id] || { status: 'pending' };
-            
-            return {
-              id: doc.id,
-              classId: classId,
-              title: data.title,
-              description: data.description,
-              dueDate: data.dueDate.toDate(),
-              className,
-              status: progress.status,
-              totalPoints: data.totalPoints,
-              grade: progress.grade,
-            };
+            // Get assignments
+            const assignmentsQuery = query(
+              collection(db, 'classes', classId, 'assignments'),
+              where('status', '==', 'active')
+            );
+
+            const unsubAssignments = onSnapshot(assignmentsQuery, (snapshot) => {
+              const assignmentsData = snapshot.docs.map(doc => {
+                const assignmentData = doc.data();
+                const progress = assignmentsProgress[doc.id] || {};
+                
+                return {
+                  id: doc.id,
+                  classId,
+                  title: assignmentData.title,
+                  description: assignmentData.description,
+                  dueDate: assignmentData.dueDate.toDate(),
+                  className,
+                  totalPoints: assignmentData.totalPoints,
+                  status: progress.status || 'pending',
+                  grade: progress.grade,
+                };
+              });
+
+              // Update assignments state
+              setAssignments(prev => {
+                const otherAssignments = prev.filter(a => a.classId !== classId);
+                return [...otherAssignments, ...assignmentsData];
+              });
+            });
+
+            unsubscribes.push(unsubAssignments);
           });
 
-          allAssignments = [...allAssignments, ...classAssignments];
+          unsubscribes.push(unsubProgress);
         } catch (error) {
-          console.error(`Error fetching data for class ${classId}:`, error);
+          console.error('Error fetching class data:', error);
         }
       }
 
-      // Sort by due date
-      allAssignments.sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
-      setAssignments(allAssignments);
       setLoading(false);
+
+      // Cleanup function
+      return () => {
+        unsubscribes.forEach(unsub => unsub());
+      };
     });
 
     return () => unsubscribeUser();
@@ -155,6 +171,7 @@ export default function StudentAssignments() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: Platform.OS === 'ios' ? 30 : 0,
     backgroundColor: COLORS.tertiary,
   },
   content: {

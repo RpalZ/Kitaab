@@ -3,7 +3,7 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { COLORS } from "app/styles/theme";
 import { useLocalSearchParams2 } from "app/utils/uselocalSearchParams2";
 import { useRouter } from "expo-router";
-import { collection, doc, getDoc, increment, onSnapshot, Timestamp, writeBatch } from 'firebase/firestore';
+import { addDoc, collection, doc, getDoc, increment, onSnapshot, serverTimestamp, Timestamp, writeBatch } from 'firebase/firestore';
 import { deleteObject, getStorage, ref } from 'firebase/storage';
 import { useEffect, useState } from 'react';
 import { FlatList, Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -142,6 +142,35 @@ export default function ClassDetail() {
     } catch (error) {
       console.error('Error deleting assignment:', error);
       alert('Failed to delete assignment');
+    }
+  };
+
+  const handleAddAssignment = async (assignmentData: {
+    title: string;
+    description: string;
+    dueDate: Date;
+    totalPoints: number;
+    resources: Array<{
+      id: string;
+      title: string;
+      description?: string;
+      url: string;
+    }>;
+  }) => {
+    try {
+      const assignmentRef = collection(db, 'classes', id as string, 'assignments');
+      await addDoc(assignmentRef, {
+        ...assignmentData,
+        dueDate: Timestamp.fromDate(assignmentData.dueDate),
+        status: 'active',
+        createdAt: serverTimestamp(),
+        resources: assignmentData.resources // Store resources directly in assignment document
+      });
+
+      setShowAddAssignment(false);
+    } catch (error) {
+      console.error('Error adding assignment:', error);
+      alert('Failed to create assignment');
     }
   };
 
@@ -499,6 +528,7 @@ export default function ClassDetail() {
         }}
         classId={id}
         assignmentToEdit={assignmentToEdit}
+        onSubmit={handleAddAssignment}
       />
 
       <AlertDialog
@@ -590,7 +620,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
   },
   tabText: {
-    fontSize: 16,
+    fontSize: 13,
     color: COLORS.text.primary,
     fontWeight: '500',
   },

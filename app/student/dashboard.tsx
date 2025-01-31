@@ -1,8 +1,8 @@
 import { db, FIREBASE_AUTH } from "@/FirebaseConfig";
 import { useRouter } from "expo-router";
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { useEffect, useState } from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Linking, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { StudentTabs } from "../components/StudentTabs";
@@ -16,6 +16,15 @@ interface ClassSummary {
   subject: string;
 }
 
+interface RecentResource {
+  id: string;
+  title: string;
+  description: string;
+  url: string;
+  className: string;
+  addedAt: Date;
+}
+
 export default function StudentDashboard() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -23,7 +32,9 @@ export default function StudentDashboard() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState("");
   const [classes, setClasses] = useState<ClassSummary[]>([]);
-  const [recentResources, setRecentResources] = useState<any[]>([]);
+  const [recentResources, setRecentResources] = useState<RecentResource[]>([]);
+  const [totalResources, setTotalResources] = useState(0);
+  const [totalAssignments, setTotalAssignments] = useState(0);
 
   useEffect(() => {
     const user = FIREBASE_AUTH.currentUser;
@@ -38,30 +49,79 @@ export default function StudentDashboard() {
       const userData = userDoc.data();
       const classIds = userData?.classIds || [];
 
-      // Fetch details for each class
-      const classPromises = classIds.map(async (classId:any) => {
+      let totalResourceCount = 0;
+      let totalAssignmentCount = 0;
+      const classPromises = classIds.map(async (classId: string) => {
         const classDoc = await getDoc(doc(db, 'classes', classId));
         const classData = classDoc.data();
-        
-        // Get teacher's name
-        const teacherDoc = await getDoc(doc(db, 'users', classData?.teacherId));
-        const teacherData = teacherDoc.data();
+
+        // Get resource count for this class
+        const resourcesSnap = await getDocs(collection(db, 'classes', classId, 'resources'));
+        totalResourceCount += resourcesSnap.size;
+
+        // Get assignment count for this class
+        const assignmentsSnap = await getDocs(collection(db, 'classes', classId, 'assignments'));
+        totalAssignmentCount += assignmentsSnap.size;
 
         return {
           id: classId,
           name: classData?.name || '',
-          teacherName: teacherData?.displayName || teacherData?.email?.split('@')[0] || 'Teacher',
-          subject: classData?.subject || '',
-          newResources: 0, // You can implement a counter for new resources
+          teacherName: classData?.teacherName || '',
+          newResources: resourcesSnap.size,
+          subject: classData?.subject || ''
         };
       });
 
       const classesData = await Promise.all(classPromises);
       setClasses(classesData);
+      setTotalResources(totalResourceCount);
+      setTotalAssignments(totalAssignmentCount);
       setLoading(false);
+
+      const fetchRecentResources = async () => {
+        try {
+          let allResources: RecentResource[] = [];
+
+          // Fetch resources from each class
+          for (const classId of classIds) {
+            // Get class name
+            const classDoc = await getDoc(doc(db, 'classes', classId));
+            const className = classDoc.data()?.name || 'Unknown Class';
+
+            // Get recent resources from this class
+            const resourcesQuery = query(
+              collection(db, 'classes', classId, 'resources'),
+              orderBy('addedAt', 'desc'),
+              limit(3)
+            );
+
+            const resourcesSnap = await getDocs(resourcesQuery);
+            const classResources = resourcesSnap.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data(),
+              className,
+              addedAt: doc.data().addedAt.toDate()
+            })) as RecentResource[];
+
+            allResources = [...allResources, ...classResources];
+          }
+
+          // Sort all resources by date and take the most recent 5
+          allResources.sort((a, b) => b.addedAt.getTime() - a.addedAt.getTime());
+          setRecentResources(allResources.slice(0, 5));
+          setLoading(false);
+        } catch (error) {
+          console.error('Error fetching recent resources:', error);
+          setLoading(false);
+        }
+      };
+
+      fetchRecentResources();
     });
 
-    return () => unsubscribeUser();
+    return () => {
+      unsubscribeUser();
+    };
   }, []);
 
   if (loading) {
@@ -82,11 +142,11 @@ export default function StudentDashboard() {
               <Text style={styles.statLabel}>Classes</Text>
             </View>
             <View style={styles.statBox}>
-              <Text style={styles.statNumber}>12</Text>
+              <Text style={styles.statNumber}>{totalAssignments}</Text>
               <Text style={styles.statLabel}>Assignments</Text>
             </View>
             <View style={styles.statBox}>
-              <Text style={styles.statNumber}>8</Text>
+              <Text style={styles.statNumber}>{totalResources}</Text>
               <Text style={styles.statLabel}>Resources</Text>
             </View>
           </View>
@@ -112,16 +172,30 @@ export default function StudentDashboard() {
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Recent Resources</Text>
-            {[
-              "Week 3 Math Notes",
-              "Physics Lab Manual",
-              "Chemistry Homework",
-            ].map((resource, index) => (
-              <TouchableOpacity key={index} style={styles.card}>
-                <Text style={styles.className}>{resource}</Text>
-                <Text style={styles.classInfo}>Added 2 days ago</Text>
-              </TouchableOpacity>
-            ))}
+            {recentResources.length === 0 ? (
+              <Text style={styles.noResources}>No resources available</Text>
+            ) : (
+              recentResources.map((resource) => (
+                <TouchableOpacity
+                  key={resource.id}
+                  style={styles.resourceCard}
+                  onPress={() => Linking.openURL(resource.url)}
+                >
+                  <View style={styles.resourceHeader}>
+                    <Text style={styles.resourceTitle}>{resource.title}</Text>
+                    <Text style={styles.className}>{resource.className}</Text>
+                  </View>
+                  {resource.description && (
+                    <Text style={styles.resourceDescription} numberOfLines={2}>
+                      {resource.description}
+                    </Text>
+                  )}
+                  <Text style={styles.dateText}>
+                    Added {resource.addedAt.toLocaleDateString()}
+                  </Text>
+                </TouchableOpacity>
+              ))
+            )}
           </View>
         </ScrollView>
         <StudentTabs activeTab={activeTab} onTabPress={setActiveTab} />
