@@ -1,12 +1,12 @@
-
+import { useRouter } from "expo-router";
 import { Text, TouchableOpacity, View } from 'react-native';
 import { tabStyles as styles } from '../styles/components/tabs.styles';
 import { TabProps } from '../types/navigation';
-import { useRouter } from "expo-router";
 
 const tabs = [
   { key: 'dashboard', label: 'Dashboard' },
   { key: 'classes', label: 'Classes' },
+  { key: 'assignments', label: 'Assignments' },
   { key: 'resources', label: 'Resources' },
   { key: 'profile', label: 'Profile' },
 ];
@@ -21,6 +21,8 @@ export function StudentTabs({ activeTab, onTabPress }: TabProps) {
       router.push('/student/dashboard');
     } else if (tabKey === 'classes') {
       router.push('/student/classes');
+    } else if (tabKey === 'assignments') {
+      router.push('/student/assignments');
     } else if (tabKey === 'resources') {
       router.push('/student/resources');
     } else {

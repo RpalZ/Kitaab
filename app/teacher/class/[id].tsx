@@ -3,13 +3,17 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { COLORS } from "app/styles/theme";
 import { useLocalSearchParams2 } from "app/utils/uselocalSearchParams2";
 import { useRouter } from "expo-router";
-import { collection, doc, getDoc, increment, onSnapshot, writeBatch } from 'firebase/firestore';
+import { collection, doc, getDoc, increment, onSnapshot, Timestamp, writeBatch } from 'firebase/firestore';
+import { deleteObject, getStorage, ref } from 'firebase/storage';
 import { useEffect, useState } from 'react';
 import { FlatList, Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Menu } from 'react-native-paper';
+import { AddAssignmentModal } from '../../components/AddAssignmentModal';
 import { AddResourceModal } from '../../components/AddResourceModal';
 import { AddStudentsModal } from '../../components/AddStudentsModal';
 import { AlertDialog } from '../../components/AlertDialog';
+import { AssignmentDetailModal } from '../../components/AssignmentDetailModal';
+import { EditAssignmentModal } from '../../components/EditAssignmentModal';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 
 interface ClassData {
@@ -23,7 +27,7 @@ interface ClassData {
 interface StudentData {
   id: string;
   name: string;
-  progress: number;
+  overallProgress: number;
   lastActive: string;
 }
 
@@ -40,9 +44,24 @@ interface ResourceData {
   uploadDate: string;
 }
 
+interface Assignment {
+  id: string;
+  title: string;
+  description: string;
+  totalPoints: number;
+  dueDate: Timestamp;
+  status: string;
+  createdAt: Timestamp;
+  type: string;
+  file?: {
+    url: string;
+    filename: string;
+    type: 'PDF' | 'Image';
+  };
+}
 
 export default function ClassDetail() {
-  const [activeTab, setActiveTab] = useState<'students' | 'resources'>('students');
+  const [activeTab, setActiveTab] = useState<'students' | 'resources' | 'assignments'>('students');
   const params = useLocalSearchParams2<{id: string}>();
   const {id} = params;
   const router = useRouter();
@@ -59,7 +78,12 @@ export default function ClassDetail() {
     visible: false,
     resourceId: ''
   });
- 
+  const [showAddAssignment, setShowAddAssignment] = useState(false);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
+  const [assignmentToEdit, setAssignmentToEdit] = useState<Assignment | null>(null);
+  const [showDeleteAssignmentAlert, setShowDeleteAssignmentAlert] = useState(false);
+  const [showEditAssignment, setShowEditAssignment] = useState(false);
 
   const toggleMenu = (resourceId: string) => {
     setMenuVisibleMap(prev => ({
@@ -96,12 +120,38 @@ export default function ClassDetail() {
     }
   };
 
+  const handleDeleteAssignment = async () => {
+    if (!assignmentToEdit) return;
+
+    try {
+      const batch = writeBatch(db);
+      
+      // Delete the assignment document
+      batch.delete(doc(db, 'classes', id, 'assignments', assignmentToEdit.id));
+
+      // If there's a file, delete it from storage
+      if (assignmentToEdit.file?.url) {
+        const storage = getStorage();
+        const fileRef = ref(storage, assignmentToEdit.file.url);
+        await deleteObject(fileRef);
+      }
+
+      await batch.commit();
+      setShowDeleteAssignmentAlert(false);
+      setAssignmentToEdit(null);
+    } catch (error) {
+      console.error('Error deleting assignment:', error);
+      alert('Failed to delete assignment');
+    }
+  };
+
   useEffect(() => {
     if (!id) return;
 
     const classRef = doc(db, 'classes', id);
     const studentsRef = collection(db, 'classes', id, 'students');
     const resourcesRef = collection(db, 'classes', id, 'resources');
+    const assignmentsRef = collection(db, 'classes', id, 'assignments');
 
     // Get class details
     const fetchClassData = async () => {
@@ -133,12 +183,22 @@ export default function ClassDetail() {
       setResources(resourcesData);
     });
 
+    // Subscribe to assignments collection
+    const unsubscribeAssignments = onSnapshot(assignmentsRef, (snapshot) => {
+      const assignmentsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Assignment[];
+      setAssignments(assignmentsData);
+    });
+
     fetchClassData();
     setLoading(false);
 
     return () => {
       unsubscribeStudents();
       unsubscribeResources();
+      unsubscribeAssignments();
     };
   }, [id]);
 
@@ -146,22 +206,21 @@ export default function ClassDetail() {
     <TouchableOpacity
       key={student.id}
       style={styles.studentCard}
-      onPress={() => router.push(`/teacher/student/${student.id}`)}
+      onPress={() => router.push(`/teacher/student/${student.id}?classId=${id}`)}
     >
-      <View style={styles.studentRow}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>
-            {student.name.split(' ').map((n) => n[0]).join('')}
-          </Text>
-        </View>
-        <View style={styles.studentInfo}>
-          <Text style={styles.studentName}>{student.name}</Text>
-          <View style={styles.progressContainer}>
-            <View style={[styles.progressBar, { width: `${student.progress}%` }]} />
-            <Text style={styles.progressText}>{student.progress}%</Text>
-          </View>
-          <Text style={styles.lastActive}>Last active: {student.lastActive}</Text>
-        </View>
+      <View style={styles.studentInfo}>
+        <Text style={styles.studentName}>{student.name}</Text>
+        <Text style={styles.studentEmail}>{student.lastActive}</Text>
+      </View>
+      <View style={styles.studentProgress}>
+        <Text style={styles.progressText}>
+          {student.overallProgress}%
+        </Text>
+        <MaterialIcons 
+          name="chevron-right" 
+          size={24} 
+          color={COLORS.text.secondary} 
+        />
       </View>
     </TouchableOpacity>
   );
@@ -206,12 +265,13 @@ export default function ClassDetail() {
               setResourceToEdit(item);
             }} 
             title="Edit"
-            leadingIcon="pencil"
+            leadingIcon={() => <MaterialIcons name="edit" size={24} color={COLORS.text.primary} />}
           />
           <Menu.Item 
             onPress={() => handleDelete(item.id)}
             title="Delete"
-            leadingIcon="delete"
+            leadingIcon={() => <MaterialIcons name="delete" size={24} color={COLORS.error} />}
+            titleStyle={{ color: COLORS.error }}
           />
         </Menu>
       </View>
@@ -268,17 +328,30 @@ export default function ClassDetail() {
       </View>
 
       <View style={styles.tabContainer}>
-        {['students', 'resources'].map((tab) => (
-          <TouchableOpacity
-            key={tab}
-            style={[styles.tab, activeTab === tab && styles.activeTab]}
-            onPress={() => setActiveTab(tab as 'students' | 'resources')}
-          >
-            <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'students' && styles.activeTab]}
+          onPress={() => setActiveTab('students')}
+        >
+          <Text style={[styles.tabText, activeTab === 'students' && styles.activeTabText]}>
+            Students
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'assignments' && styles.activeTab]}
+          onPress={() => setActiveTab('assignments')}
+        >
+          <Text style={[styles.tabText, activeTab === 'assignments' && styles.activeTabText]}>
+            Assignments
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'resources' && styles.activeTab]}
+          onPress={() => setActiveTab('resources')}
+        >
+          <Text style={[styles.tabText, activeTab === 'resources' && styles.activeTabText]}>
+            Resources
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.content}>
@@ -299,6 +372,86 @@ export default function ClassDetail() {
               showsVerticalScrollIndicator={false}
             />
           
+          </>
+        ) : activeTab === 'assignments' ? (
+          <>
+            <TouchableOpacity 
+              style={styles.addButton}
+              onPress={() => setShowAddAssignment(true)}
+            >
+              <Ionicons name="add" size={24} color={COLORS.text.light} />
+              <Text style={styles.addButtonText}>Add Assignment</Text>
+            </TouchableOpacity>
+            <FlatList
+              data={assignments}
+              renderItem={({ item: assignment }) => (
+                <TouchableOpacity
+                  style={styles.assignmentCard}
+                  onPress={() => !menuVisibleMap[assignment.id] && setSelectedAssignment(assignment)}
+                >
+                  <View style={styles.assignmentHeader}>
+                    <Text style={styles.assignmentTitle}>{assignment.title}</Text>
+                    <Menu
+                      visible={menuVisibleMap[assignment.id] || false}
+                      onDismiss={() => toggleMenu(assignment.id)}
+                      anchor={
+                        <TouchableOpacity 
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            toggleMenu(assignment.id);
+                          }}
+                          style={styles.menuButton}
+                        >
+                          <MaterialIcons name="more-vert" size={24} color={COLORS.text.primary} />
+                        </TouchableOpacity>
+                      }
+                    >
+                      <Menu.Item 
+                        onPress={() => {
+                          toggleMenu(assignment.id);
+                          setAssignmentToEdit(assignment);
+                          setShowEditAssignment(true);
+                        }} 
+                        title="Edit" 
+                        leadingIcon={() => <MaterialIcons name="edit" size={24} color={COLORS.text.primary} />}
+                      />
+                      <Menu.Item 
+                        onPress={() => {
+                          toggleMenu(assignment.id);
+                          setAssignmentToEdit(assignment);
+                          setShowDeleteAssignmentAlert(true);
+                        }} 
+                        title="Delete" 
+                        leadingIcon={() => <MaterialIcons name="delete" size={24} color={COLORS.error} />}
+                        titleStyle={{ color: COLORS.error }}
+                      />
+                    </Menu>
+                  </View>
+                  {assignment.description && (
+                    <Text 
+                      style={styles.assignmentDescription}
+                      numberOfLines={2}
+                    >
+                      {assignment.description}
+                    </Text>
+                  )}
+                  <Text style={styles.assignmentDueDate}>
+                    Due: {assignment.dueDate.toDate().toLocaleDateString()}
+                  </Text>
+                  {assignment.file && (
+                    <View style={styles.fileIndicator}>
+                      <MaterialIcons 
+                        name={assignment.file.type === 'PDF' ? 'picture-as-pdf' : 'image'} 
+                        size={16} 
+                        color={COLORS.text.secondary} 
+                      />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              )}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={styles.listContainer}
+            />
           </>
         ) : (
           <>
@@ -338,6 +491,16 @@ export default function ClassDetail() {
         resourceToEdit={resourceToEdit}
       />
 
+      <AddAssignmentModal
+        visible={showAddAssignment}
+        onClose={() => {
+          setShowAddAssignment(false);
+          setAssignmentToEdit(null);
+        }}
+        classId={id}
+        assignmentToEdit={assignmentToEdit}
+      />
+
       <AlertDialog
         visible={deleteAlert.visible}
         title="Delete Resource"
@@ -345,6 +508,45 @@ export default function ClassDetail() {
         onConfirm={confirmDelete}
         onCancel={() => setDeleteAlert({ visible: false, resourceId: '' })}
       />
+
+      {selectedAssignment && (
+        <AssignmentDetailModal
+          visible={!!selectedAssignment}
+          onClose={() => setSelectedAssignment(null)}
+          assignment={selectedAssignment}
+          onEdit={() => {
+            setAssignmentToEdit(selectedAssignment);
+            setSelectedAssignment(null);
+            setShowAddAssignment(true);
+          }}
+          onDelete={() => {
+            setShowDeleteAssignmentAlert(true);
+          }}
+        />
+      )}
+
+      <AlertDialog
+        visible={showDeleteAssignmentAlert}
+        title="Delete Assignment"
+        message="Are you sure you want to delete this assignment? This action cannot be undone."
+        onConfirm={handleDeleteAssignment}
+        onCancel={() => {
+          setShowDeleteAssignmentAlert(false);
+          setAssignmentToEdit(null);
+        }}
+      />
+
+      {assignmentToEdit && (
+        <EditAssignmentModal
+          visible={showEditAssignment}
+          onClose={() => {
+            setShowEditAssignment(false);
+            setAssignmentToEdit(null);
+          }}
+          classId={id}
+          assignment={assignmentToEdit}
+        />
+      )}
     </View>
   );
 }
@@ -404,60 +606,36 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   studentCard: {
-    backgroundColor: COLORS.card.primary,
-    borderRadius: 16,
-    padding: 15,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  studentRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: COLORS.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 15,
-  },
-  avatarText: {
-    color: COLORS.text.light,
-    fontSize: 18,
-    fontWeight: 'bold',
+    backgroundColor: COLORS.card.primary,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
   },
   studentInfo: {
     flex: 1,
   },
   studentName: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: COLORS.text.primary,
-    marginBottom: 8,
+    marginBottom: 4,
   },
-  progressContainer: {
-    height: 6,
-    backgroundColor: COLORS.card.secondary,
-    borderRadius: 3,
-    marginBottom: 8,
-    overflow: 'hidden',
+  studentEmail: {
+    fontSize: 14,
+    color: COLORS.text.secondary,
   },
-  progressBar: {
-    height: '100%',
-    backgroundColor: COLORS.primary,
+  studentProgress: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   progressText: {
     fontSize: 14,
-    color: COLORS.text.secondary,
-  },
-  lastActive: {
-    fontSize: 14,
-    color: COLORS.text.secondary,
+    color: COLORS.text.primary,
+    fontWeight: '500',
   },
   addButton: {
     flexDirection: 'row',
@@ -516,6 +694,43 @@ const styles = StyleSheet.create({
   },
   menuButton: {
     padding: 8,
+    marginLeft: 'auto',
+  },
+  assignmentCard: {
+    backgroundColor: COLORS.card.primary,
+    borderRadius: 16,
+    padding: 15,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  assignmentHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  assignmentTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.text.primary,
+    marginLeft: 12,
+    flex: 1,
+  },
+  assignmentPoints: {
+    color: COLORS.text.secondary,
+    fontSize: 14,
+  },
+  assignmentDescription: {
+    color: COLORS.text.secondary,
+    fontSize: 14,
+  },
+  assignmentDueDate: {
+    color: COLORS.text.secondary,
+    fontSize: 12,
+  },
+  fileIndicator: {
     marginLeft: 'auto',
   },
 });

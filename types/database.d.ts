@@ -21,6 +21,8 @@ interface StudentClassProgress {
       grade?: number;
       submittedAt?: Timestamp;
       feedback?: string;
+      comment: string;
+      file: any;
     }
   }
 }
@@ -30,9 +32,15 @@ interface Assignment {
   id: string;
   title: string;
   description: string;
-  dueDate: Timestamp;
-  resourceIds: string[];  // Related resources
-  type: 'homework' | 'quiz' | 'project';
   totalPoints: number;
-  status: 'active' | 'archived';
+  dueDate: Timestamp;
+  status: string;
+  createdAt: Timestamp;
+  type: string;
+  file?: {
+    url: string;
+    filename: string;
+    type: 'PDF' | 'Image';
+  };
+  resourceIds?: string[]; // Make resourceIds optional
 } 
