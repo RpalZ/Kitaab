@@ -8,7 +8,10 @@ import {
     TextInput,
     TouchableOpacity,
     View,
-    StyleSheet
+    StyleSheet,
+    ActivityIndicator,
+    Alert,
+    Platform
 } from "react-native";
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { TeacherTabs } from "../components/TeacherTabs";
@@ -17,7 +20,6 @@ import { db, storage } from "../../FirebaseConfig";
 import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, updateDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, getStorage} from "firebase/storage";
 import * as WebBrowser from 'expo-web-browser';
-import { Platform } from 'react-native';
 import { COLORS } from "../styles/theme";
 
 type Resource = {
@@ -41,6 +43,7 @@ export default function TeacherForum() {
   const [resources, setResources] = useState<Resource[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const pickDocument = async () => {
     try {
@@ -60,36 +63,35 @@ export default function TeacherForum() {
 
   const addResource = async (title: string, desc: string) => {
     if (!title.trim()) {
-      throw new Error('Title is required');
+      Alert.alert('Error', 'Title is required');
+      return;
     }
   
+    setIsSubmitting(true);
     try {
       let fileUrl = null;
-      let fileData= null;
+      let fileData = null;
       
       const resource: Resource = {
         title: title.trim(),
         description: desc.trim(),
         createdAt: undefined
       };
+
       const docRef = await addDoc(collection(db, "posts"), {
         ...resource,
         createdAt: serverTimestamp(),
       });
       const postId = docRef.id;
 
-
       // Check if a file is selected
       if (selectedFile?.assets?.[0]) {
         const file = selectedFile.assets[0];
         
-        // Validate file
         if (!file.uri) {
           throw new Error('Invalid file: missing URI');
         }
         
-  
-        // Generate a unique filename to prevent collisions
         const fileName = file.name || `unnamed_file_${Date.now()}`;
         const fileRef = ref(storage, `posts/${postId}/files/${fileName}`);
   
@@ -101,38 +103,54 @@ export default function TeacherForum() {
           const blob = await response.blob();
           
           const uploadTask = await uploadBytes(fileRef, blob);
-          console.log('Upload successful:', uploadTask);
-            
           const downloadUrl = await getDownloadURL(uploadTask.ref);
-          console.log('Download URL:', downloadUrl);
   
-          // Prepare file data
           fileData = {
             name: fileName,
-            uri: fileUrl,
+            uri: downloadUrl,
             type: file.mimeType || 'application/octet-stream',
           };
 
           await updateDoc(docRef, {
-            file: fileData});
+            file: fileData
+          });
         } catch (error) {
           throw new Error(`File upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
       }
   
-      
-  
-      // Only update state if database operation succeeded
-      setResources([...resources, { ...resource}]);
+      setResources([...resources, { ...resource }]);
       setTitle("");
       setDesc("");
       setSelectedFile(null);
       setIsModalVisible(false);
+      
+      // Show success alert
+      if (Platform.OS === 'web') {
+        alert('Resource has been uploaded successfully!');
+      } else {
+        Alert.alert(
+          'Success',
+          'Resource has been uploaded successfully!',
+          [{ text: 'OK' }]
+        );
+      }
   
       return docRef.id;
     } catch (error) {
       console.error("Error adding resource:", error);
-      throw error; // Re-throw to let caller handle the error
+      if (Platform.OS === 'web') {
+        alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      } else {
+        Alert.alert(
+          'Error',
+          `${error instanceof Error ? error.message : 'Unknown error'}`,
+          [{ text: 'OK' }]
+        );
+      }
+      throw error;
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -293,21 +311,24 @@ export default function TeacherForum() {
               <TextInput
                 value={title}
                 onChangeText={(text) => setTitle(text)}
-                style={localStyles.input}
+                style={[localStyles.input, isSubmitting && localStyles.disabledButton]}
+                editable={!isSubmitting}
               />
 
               <Text style={localStyles.label}>Description of Resource</Text>
               <TextInput
                 value={desc}
                 onChangeText={(text) => setDesc(text)}
-                style={localStyles.input}
+                style={[localStyles.input, localStyles.multilineInput, isSubmitting && localStyles.disabledButton]}
                 multiline={true}
                 numberOfLines={3}
+                editable={!isSubmitting}
               />
 
               <TouchableOpacity
-                style={localStyles.filePickerButton}
+                style={[localStyles.filePickerButton, isSubmitting && localStyles.disabledButton]}
                 onPress={pickDocument}
+                disabled={isSubmitting}
               >
                 <Ionicons name="cloud-upload-outline" size={24} color="#666" />
                 <Text style={localStyles.filePickerText}>
@@ -316,18 +337,24 @@ export default function TeacherForum() {
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={localStyles.saveButton}
+                style={[localStyles.saveButton, isSubmitting && localStyles.disabledButton]}
                 onPress={() => addResource(title, desc)}
+                disabled={isSubmitting}
               >
-                <Text style={localStyles.saveButtonText}>Add Resource</Text>
+                {isSubmitting ? (
+                  <ActivityIndicator color={COLORS.text.light} />
+                ) : (
+                  <Text style={localStyles.saveButtonText}>Add Resource</Text>
+                )}
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={localStyles.cancelButton}
+                style={[localStyles.cancelButton, isSubmitting && localStyles.disabledButton]}
                 onPress={() => {
                   setIsModalVisible(false);
                   setSelectedFile(null);
                 }}
+                disabled={isSubmitting}
               >
                 <Text style={localStyles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
@@ -462,7 +489,8 @@ const localStyles = StyleSheet.create({
     padding: 20,
     borderRadius: 12,
     width: '90%',
-    maxWidth: 500,
+    maxWidth: Platform.OS === 'web' ? 500 : '95%',
+    margin: Platform.OS === 'web' ? 0 : 20,
   },
 
   label: {
@@ -475,19 +503,21 @@ const localStyles = StyleSheet.create({
   input: {
     backgroundColor: COLORS.card.secondary,
     borderRadius: 8,
-    padding: 12,
+    padding: Platform.OS === 'ios' ? 12 : 8,
     marginBottom: 16,
     color: COLORS.text.primary,
     fontSize: 16,
+    width: '100%',
   },
 
   filePickerButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.card.secondary,
-    padding: 12,
+    padding: Platform.OS === 'ios' ? 14 : 12,
     borderRadius: 8,
     marginBottom: 16,
+    width: '100%',
   },
 
   filePickerText: {
@@ -539,5 +569,14 @@ const localStyles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
+  },
+
+  multilineInput: {
+    minHeight: 100,
+    textAlignVertical: 'top',
+  },
+
+  disabledButton: {
+    opacity: 0.5,
   },
 });
