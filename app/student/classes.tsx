@@ -1,96 +1,138 @@
+import { db, FIREBASE_AUTH } from '@/FirebaseConfig';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { collection, doc, getDoc, getDocs, onSnapshot, query, where } from 'firebase/firestore';
+import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { LoadingSpinner } from "../components/LoadingSpinner";
 import { StudentTabs } from "../components/StudentTabs";
 import { COLORS } from "../styles/theme";
 
-//placeholder stuff
-const mockClasses = [
-  {
-    id: 1,
-    name: "Mathematics 101",
-    teacher: "Dr. Sarah Johnson",
-    assignmentsDue: 3,
-    nextDeadline: "2024-03-20",
-    progress: 75
-  },
-  {
-    id: 2,
-    name: "Physics Basic",
-    teacher: "Prof. Michael Chen",
-    assignmentsDue: 1,
-    nextDeadline: "2024-03-22",
-    progress: 82
-  },
-  {
-    id: 3,
-    name: "Chemistry Lab",
-    teacher: "Dr. Emily Brown",
-    assignmentsDue: 2,
-    nextDeadline: "2024-03-21",
-    progress: 68
-  }
-];
+interface ClassDetails {
+  id: string;
+  name: string;
+  teacher: string;
+  assignmentsDue: number;
+  nextDeadline: string | null;
+  progress: number;
+  subject: string;
+}
+
+interface AssignmentData {
+  id: string;
+  dueDate: string;
+  status: 'active' | 'archived';
+}
 
 export default function StudentClasses() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState("classes");
+  const [loading, setLoading] = useState(true);
+  const [classes, setClasses] = useState<ClassDetails[]>([]);
+  const [activeTab, setActiveTab] = useState('classes');
+
+  useEffect(() => {
+    const user = FIREBASE_AUTH.currentUser;
+    if (!user) return;
+
+    // Fetch user's profile to get classIds
+    const userRef = doc(db, 'users', user.uid);
+    const unsubscribeUser = onSnapshot(userRef, async (userDoc) => {
+      const userData = userDoc.data();
+      const classIds = userData?.classIds || [];
+
+      // Fetch details for each class
+      const classPromises = classIds.map(async (classId: string) => {
+        const classDoc = await getDoc(doc(db, 'classes', classId));
+        const classData = classDoc.data();
+        
+        // Get teacher's name
+        const teacherDoc = await getDoc(doc(db, 'users', classData?.teacherId));
+        const teacherData = teacherDoc.data();
+
+        // Get assignments using getDocs instead of getDoc
+        const assignmentsQuery = query(
+          collection(db, 'classes', classId, 'assignments'),
+          where('status', '==', 'active')
+        );
+        const assignmentsSnap = await getDocs(assignmentsQuery);
+        const assignments = assignmentsSnap.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as AssignmentData[];
+
+        // Get student's progress
+        const progressDoc = await getDoc(doc(db, 'classes', classId, 'students', user.uid));
+        const progressData = progressDoc.data();
+
+        return {
+          id: classId,
+          name: classData?.name || '',
+          teacher: teacherData?.displayName || teacherData?.email?.split('@')[0] || 'Teacher',
+          subject: classData?.subject || '',
+          assignmentsDue: assignments.length,
+          nextDeadline: assignments.length > 0 ? 
+            assignments.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())[0].dueDate : null,
+          progress: progressData?.overallProgress || 0
+        };
+      });
+
+      const classesData = await Promise.all(classPromises);
+      setClasses(classesData);
+      setLoading(false);
+    });
+
+    return () => unsubscribeUser();
+  }, []);
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <Text style={styles.title}>My Classes</Text>
-        </View>
+      <StudentTabs activeTab="classes" onTabPress={setActiveTab} />
+      <ScrollView style={styles.content}>
+        {classes.map((classItem) => (
+          <TouchableOpacity
+            key={classItem.id}
+            style={styles.classCard}
+            onPress={() => router.push(`/student/class/${classItem.id}`)}
+          >
+            <View style={styles.classHeader}>
+              <Text style={styles.className}>{classItem.name}</Text>
+              <Text style={styles.teacherName}>{classItem.teacher}</Text>
+            </View>
 
-        <View style={styles.classesContainer}>
-          {mockClasses.map((classItem) => (
-            <TouchableOpacity
-              key={classItem.id}
-              style={styles.classCard}
-              onPress={() => router.push(`/student/class/${classItem.id}`)}
-            >
-              <View style={styles.classHeader}>
-                <Text style={styles.className}>{classItem.name}</Text>
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>
-                    {classItem.assignmentsDue} due
+            <View style={styles.classInfo}>
+              <View style={styles.infoItem}>
+                <MaterialIcons name="assignment" size={20} color={COLORS.text.secondary} />
+                <Text style={styles.infoText}>{classItem.assignmentsDue} assignments due</Text>
+              </View>
+              
+              {classItem.nextDeadline && (
+                <View style={styles.infoItem}>
+                  <MaterialIcons name="event" size={20} color={COLORS.text.secondary} />
+                  <Text style={styles.infoText}>
+                    Next deadline: {new Date(classItem.nextDeadline).toLocaleDateString()}
                   </Text>
                 </View>
-              </View>
+              )}
+            </View>
 
-              <View style={styles.teacherInfo}>
-                <MaterialIcons name="person" size={16} color={COLORS.text.secondary} />
-                <Text style={styles.teacherName}>{classItem.teacher}</Text>
+            <View style={styles.progressContainer}>
+              <View style={styles.progressBar}>
+                <View 
+                  style={[
+                    styles.progressFill, 
+                    { width: `${classItem.progress}%` }
+                  ]} 
+                />
               </View>
-
-              <View style={styles.progressContainer}>
-                <View style={styles.progressInfo}>
-                  <Text style={styles.progressText}>Course Progress</Text>
-                  <Text style={styles.progressPercentage}>{classItem.progress}%</Text>
-                </View>
-                <View style={styles.progressBar}>
-                  <View 
-                    style={[
-                      styles.progressFill,
-                      { width: `${classItem.progress}%` }
-                    ]} 
-                  />
-                </View>
-              </View>
-
-              <View style={styles.deadlineInfo}>
-                <MaterialIcons name="event" size={16} color={COLORS.text.secondary} />
-                <Text style={styles.deadlineText}>
-                  Next deadline: {classItem.nextDeadline}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
+              <Text style={styles.progressText}>{classItem.progress}% Complete</Text>
+            </View>
+          </TouchableOpacity>
+        ))}
       </ScrollView>
-      <StudentTabs activeTab={activeTab} onTabPress={setActiveTab} />
     </View>
   );
 }
@@ -155,7 +197,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   progressContainer: {
-    marginBottom: 8,
+    marginTop: 10,
   },
   progressInfo: {
     flexDirection: 'row',
@@ -164,8 +206,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   progressText: {
-    fontSize: 14,
     color: COLORS.text.secondary,
+    fontSize: 12,
+    marginTop: 4,
   },
   progressPercentage: {
     fontSize: 14,
@@ -173,17 +216,14 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   progressBar: {
-    height: 24,  // Match teacher's progress bar height
-    backgroundColor: '#2A2A2A',
-    borderRadius: 12,
+    height: 8,
+    backgroundColor: COLORS.card.secondary,
+    borderRadius: 4,
     overflow: 'hidden',
-    marginBottom: 8,
-    position: 'relative',
   },
   progressFill: {
     height: '100%',
     backgroundColor: COLORS.primary,
-    borderRadius: 12,
   },
   deadlineInfo: {
     flexDirection: 'row',
@@ -192,6 +232,24 @@ const styles = StyleSheet.create({
   deadlineText: {
     fontSize: 14,
     color: COLORS.text.secondary,
+    marginLeft: 8,
+  },
+  content: {
+    paddingTop: 20,
+  },
+  classInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  infoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  infoText: {
+    color: COLORS.text.secondary,
+    fontSize: 14,
     marginLeft: 8,
   },
 }); 

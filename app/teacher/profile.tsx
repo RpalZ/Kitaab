@@ -9,7 +9,7 @@ import {
   reauthenticateWithCredential,
 } from "firebase/auth";
 import { useState } from "react";
-import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Alert, ScrollView, Text, TouchableOpacity, View, StyleSheet, Linking } from "react-native";
 import { SignOutModal } from "../components/profile/SignOutModal";
 import { EditProfileModal } from "../components/profile/EditProfileModal";
 import { TeacherTabs } from "../components/TeacherTabs";
@@ -43,9 +43,6 @@ export default function TeacherProfile() {
     try {
       if (!user) throw new Error("No user found");
 
-      // Reauthenticate user before email update
-
-      // Update profile and email
       await updateProfile(user, { displayName: newName });
       console.log("Profile updated successfully!");
       setProfileVisible(false);
@@ -55,6 +52,14 @@ export default function TeacherProfile() {
         "Error",
         "Failed to update profile. Make sure your password is correct."
       );
+    }
+  };
+
+  const handleContactUs = async () => {
+    try {
+      await Linking.openURL('https://linktr.ee/Kitaab_Hackathon');
+    } catch (error) {
+      console.error('Error opening link:', error);
     }
   };
 
@@ -89,10 +94,10 @@ export default function TeacherProfile() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Support</Text>
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuItemText}>Help Center</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={handleContactUs}
+          >
             <Text style={styles.menuItemText}>Contact Us</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.menuItem}>
