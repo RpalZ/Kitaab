@@ -1,8 +1,8 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Post } from '../types/forum';
-import { COLORS, FONTS } from '../styles/theme';
-import Ionicons from "@expo/vector-icons/Ionicons";
+import { COLORS } from '../styles/theme';
 import { formatDistanceToNow } from 'date-fns';
+import Ionicons from "@expo/vector-icons/Ionicons";
 
 type PostCardProps = {
   post: Post;
@@ -13,28 +13,29 @@ export function PostCard({ post, onPress }: PostCardProps) {
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
       <View style={styles.header}>
-        <Text style={styles.author}>{post.authorName}</Text>
-        <Text style={styles.date}>
-          {post.createdAt ? formatDistanceToNow(post.createdAt.toDate(), { addSuffix: true }) : ''}
+        <Text style={styles.authorName}>{post.authorName}</Text>
+        <Text style={styles.timestamp}>
+          {formatDistanceToNow(post.createdAt.toDate(), { addSuffix: true })}
         </Text>
       </View>
-      
+
       <Text style={styles.title}>{post.title}</Text>
       <Text style={styles.content} numberOfLines={3}>
         {post.content}
       </Text>
-      
+
       <View style={styles.footer}>
-        <View style={styles.footerItem}>
-          <Ionicons name="chatbubble-outline" size={16} color={COLORS.text.secondary} />
-          <Text style={styles.footerText}>{post.commentCount} comments</Text>
-        </View>
         {post.files && post.files.length > 0 && (
-          <View style={styles.footerItem}>
-            <Ionicons name="attach" size={16} color={COLORS.text.secondary} />
-            <Text style={styles.footerText}>{post.files.length} files</Text>
+          <View style={styles.filesInfo}>
+            <Ionicons name="document-attach" size={16} color={COLORS.text.secondary} />
+            <Text style={styles.filesCount}>{post.files.length} file(s)</Text>
           </View>
         )}
+
+        <View style={styles.commentsInfo}>
+          <Ionicons name="chatbubble-outline" size={16} color={COLORS.text.secondary} />
+          <Text style={styles.commentsCount}>{post.commentCount || 0}</Text>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -46,45 +47,61 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: COLORS.primary,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    alignItems: 'center',
+    marginBottom: 12,
   },
-  author: {
+  authorName: {
+    fontSize: 14,
+    fontWeight: '600',
     color: COLORS.text.primary,
-    fontSize: FONTS.sizes.sm,
-    fontWeight: FONTS.weights.medium,
   },
-  date: {
+  timestamp: {
+    fontSize: 12,
     color: COLORS.text.secondary,
-    fontSize: FONTS.sizes.xs,
   },
   title: {
-    fontSize: FONTS.sizes.md,
-    fontWeight: FONTS.weights.semibold,
+    fontSize: 18,
+    fontWeight: 'bold',
     color: COLORS.text.primary,
     marginBottom: 8,
   },
   content: {
-    fontSize: FONTS.sizes.sm,
+    fontSize: 14,
     color: COLORS.text.secondary,
+    lineHeight: 20,
     marginBottom: 12,
   },
   footer: {
     flexDirection: 'row',
-    gap: 16,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
   },
-  footerItem: {
+  filesInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    marginRight: 16,
   },
-  footerText: {
+  filesCount: {
+    fontSize: 12,
     color: COLORS.text.secondary,
-    fontSize: FONTS.sizes.xs,
+    marginLeft: 4,
+  },
+  commentsInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  commentsCount: {
+    fontSize: 12,
+    color: COLORS.text.secondary,
+    marginLeft: 4,
   },
 }); 
