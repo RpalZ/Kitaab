@@ -7,7 +7,8 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
-    View
+    View,
+    StyleSheet
 } from "react-native";
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { TeacherTabs } from "../components/TeacherTabs";
@@ -17,6 +18,7 @@ import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, updateDoc
 import { ref, uploadBytes, getDownloadURL, getStorage} from "firebase/storage";
 import * as WebBrowser from 'expo-web-browser';
 import { Platform } from 'react-native';
+import { COLORS } from "../styles/colors";
 
 type Resource = { 
   id?:string;
@@ -37,6 +39,7 @@ export default function TeacherForum() {
     useState<DocumentPicker.DocumentPickerResult | null>(null);
   const [resources, setResources] = useState<Resource[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const pickDocument = async () => {
     try {
@@ -209,28 +212,63 @@ export default function TeacherForum() {
     getPosts();
   }, []);
 
+  const filteredResources = resources.filter(resource =>
+    resource.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    resource.description.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <ProtectedRoute requiredRole="teacher">
       <View style={styles.container}>
-        <ScrollView style={styles.scrollContainer}>
-          {resources.map((resource, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.resourceButton}
-              onPress={() =>
-                downloadFile(resource.file?.uri || "", resource.file?.name || "")
-              }
-            >
-              <Text style={styles.titleTextStyle}>{resource.title}</Text>
-              <Text style={styles.textStyle}>{resource.description}</Text>
-              {resource.file && (
-                <View style={styles.fileContainer}>
-                  <Ionicons name="document-outline" size={20} color="#666" />
-                  <Text style={styles.fileNameText}>{resource.file.name}</Text>
-                </View>
-              )}
+        <View style={styles.searchContainer}>
+          <Ionicons name="search" size={20} color={COLORS.primary} style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search resources..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholderTextColor={COLORS.text.secondary}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery("")}>
+              <Ionicons name="close-circle" size={20} color={COLORS.primary} />
             </TouchableOpacity>
-          ))}
+          )}
+        </View>
+
+        <ScrollView style={styles.scrollContainer}>
+          {filteredResources.length === 0 ? (
+            <View style={styles.emptyStateContainer}>
+              <Ionicons name="document-outline" size={48} color={COLORS.text.secondary} />
+              <Text style={styles.emptyStateText}>
+                {searchQuery.length > 0 
+                  ? "No resources found matching your search"
+                  : "No resources available yet"}
+              </Text>
+            </View>
+          ) : (
+            filteredResources.map((resource, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.resourceButton}
+                onPress={() =>
+                  downloadFile(resource.file?.uri || "", resource.file?.name || "")
+                }
+              >
+                <Text style={styles.titleTextStyle}>{resource.title}</Text>
+                <Text style={styles.textStyle}>{resource.description}</Text>
+                {resource.file && (
+                  <View style={styles.fileContainer}>
+                    <Ionicons name="document-outline" size={20} color={COLORS.primary} />
+                    <Text style={styles.fileNameText}>{resource.file.name}</Text>
+                  </View>
+                )}
+                <Text style={styles.dateText}>
+                  {resource.createdAt?.toDate().toLocaleDateString() || ''}
+                </Text>
+              </TouchableOpacity>
+            ))
+          )}
         </ScrollView>
 
         <TouchableOpacity
@@ -299,3 +337,108 @@ export default function TeacherForum() {
     </ProtectedRoute>
   );
 }
+
+const styles = StyleSheet.create({
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.card.primary,
+    borderRadius: 12,
+    marginHorizontal: 16,
+    marginVertical: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+
+  searchIcon: {
+    marginRight: 12,
+  },
+
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: COLORS.text.primary,
+    padding: 0,
+  },
+
+  resourceButton: {
+    backgroundColor: COLORS.card.primary,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.primary,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+
+  titleTextStyle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+    marginBottom: 8,
+  },
+
+  textStyle: {
+    fontSize: 16,
+    color: COLORS.text.primary,
+    marginBottom: 12,
+    lineHeight: 22,
+  },
+
+  fileContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.card.secondary,
+    padding: 8,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+
+  fileNameText: {
+    marginLeft: 8,
+    color: COLORS.primary,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+
+  dateText: {
+    fontSize: 12,
+    color: COLORS.text.secondary,
+    marginTop: 8,
+    textAlign: 'right',
+  },
+
+  emptyStateContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+    marginTop: 32,
+  },
+
+  emptyStateText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: COLORS.text.secondary,
+    textAlign: 'center',
+  },
+
+  scrollContainer: {
+    flex: 1,
+    padding: 16,
+  },
+});
