@@ -34,8 +34,10 @@ type Resource = {
   };
 };
 
+type TabType = 'resources' | 'posts';
+
 export default function TeacherForum() {
-  const [activeTab, setActiveTab] = useState("forum");
+  const [activeTab, setActiveTab] = useState<TabType>('resources');
   const [title, setTitle] = useState("title");
   const [desc, setDesc] = useState("description");
   const [selectedFile, setSelectedFile] =
@@ -240,123 +242,180 @@ export default function TeacherForum() {
 
   return (
     <ProtectedRoute requiredRole="teacher">
-      <View style={localStyles.container}>
-        <View style={localStyles.searchContainer}>
-          <Ionicons name="search" size={20} color={COLORS.primary} style={localStyles.searchIcon} />
-          <TextInput
-            style={localStyles.searchInput}
-            placeholder="Search resources..."
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholderTextColor={COLORS.text.secondary}
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery("")}>
-              <Ionicons name="close-circle" size={20} color={COLORS.primary} />
-            </TouchableOpacity>
-          )}
+      <View style={styles.container}>
+        {/* Tab Selector */}
+        <View style={styles.tabContainer}>
+          <TouchableOpacity 
+            style={[styles.tab, activeTab === 'resources' && styles.activeTab]}
+            onPress={() => setActiveTab('resources')}
+          >
+            <Text style={[styles.tabText, activeTab === 'resources' && styles.activeTabText]}>
+              Resources
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.tab, activeTab === 'posts' && styles.activeTab]}
+            onPress={() => setActiveTab('posts')}
+          >
+            <Text style={[styles.tabText, activeTab === 'posts' && styles.activeTabText]}>
+              Teacher Posts
+            </Text>
+          </TouchableOpacity>
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={true} style={[localStyles.scrollContainer, globalStyles.scrollViewStyle]}>
-          {filteredResources.length === 0 ? (
-            <View style={localStyles.emptyStateContainer}>
-              <Ionicons name="document-outline" size={48} color={COLORS.text.secondary} />
-              <Text style={localStyles.emptyStateText}>
-                {searchQuery.length > 0 
-                  ? "No resources found matching your search"
-                  : "No resources available yet"}
-              </Text>
+        {activeTab === 'resources' ? (
+          // Resources Tab Content
+          <>
+            <View style={styles.searchContainer}>
+              <Ionicons name="search" size={20} color={COLORS.primary} style={styles.searchIcon} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search resources..."
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholderTextColor={COLORS.text.secondary}
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchQuery("")}>
+                  <Ionicons name="close-circle" size={20} color={COLORS.primary} />
+                </TouchableOpacity>
+              )}
             </View>
-          ) : (
-            filteredResources.map((resource, index) => (
-              <TouchableOpacity
-                key={index}
-                style={localStyles.resourceButton}
-                onPress={() =>
-                  downloadFile(resource.file?.uri || "", resource.file?.name || "")
-                }
-              >
-                <Text style={localStyles.titleTextStyle}>{resource.title}</Text>
-                <Text style={localStyles.textStyle}>{resource.description}</Text>
-                {resource.file && (
-                  <View style={localStyles.fileContainer}>
-                    <Ionicons name="document-outline" size={20} color={COLORS.primary} />
-                    <Text style={localStyles.fileNameText}>{resource.file.name}</Text>
-                  </View>
-                )}
-                <Text style={localStyles.dateText}>
-                  {resource.createdAt?.toDate().toLocaleDateString() || ''}
-                </Text>
-              </TouchableOpacity>
-            ))
-          )}
-        </ScrollView>
 
-        <TouchableOpacity
-          style={localStyles.addButton}
-          onPress={() => setIsModalVisible(true)}
-        >
-          <Ionicons name="add-outline" size={24} color="#fff" />
-        </TouchableOpacity>
+            <ScrollView style={styles.scrollContainer}>
+              {filteredResources.length === 0 ? (
+                <View style={styles.emptyStateContainer}>
+                  <Ionicons name="document-outline" size={48} color={COLORS.text.secondary} />
+                  <Text style={styles.emptyStateText}>
+                    {searchQuery.length > 0 
+                      ? "No resources found matching your search"
+                      : "No resources available yet"}
+                  </Text>
+                </View>
+              ) : (
+                filteredResources.map((resource, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.resourceButton}
+                    onPress={() =>
+                      downloadFile(resource.file?.uri || "", resource.file?.name || "")
+                    }
+                  >
+                    <Text style={styles.titleTextStyle}>{resource.title}</Text>
+                    <Text style={styles.textStyle}>{resource.description}</Text>
+                    {resource.file && (
+                      <View style={styles.fileContainer}>
+                        <Ionicons name="document-outline" size={20} color={COLORS.primary} />
+                        <Text style={styles.fileNameText}>{resource.file.name}</Text>
+                      </View>
+                    )}
+                    <Text style={styles.dateText}>
+                      {resource.createdAt?.toDate().toLocaleDateString() || ''}
+                    </Text>
+                  </TouchableOpacity>
+                ))
+              )}
+            </ScrollView>
+
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => setIsModalVisible(true)}
+            >
+              <Ionicons name="add" size={24} color={COLORS.text.light} />
+            </TouchableOpacity>
+          </>
+        ) : (
+          // Posts Tab Content
+          <>
+            <View style={styles.searchContainer}>
+              <Ionicons name="search" size={20} color={COLORS.primary} style={styles.searchIcon} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search posts..."
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholderTextColor={COLORS.text.secondary}
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchQuery("")}>
+                  <Ionicons name="close-circle" size={20} color={COLORS.primary} />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            <ScrollView style={styles.scrollContainer}>
+              <View style={styles.emptyStateContainer}>
+                <Text style={styles.emptyStateText}>Posts coming soon...</Text>
+              </View>
+            </ScrollView>
+
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => {/* TODO: Implement post creation */}}
+            >
+              <Ionicons name="add" size={24} color={COLORS.text.light} />
+            </TouchableOpacity>
+          </>
+        )}
 
         <Modal
-          visible={isModalVisible}
-          transparent={true}
           animationType="slide"
+          transparent={true}
+          visible={isModalVisible}
           onRequestClose={() => setIsModalVisible(false)}
         >
-          <View style={localStyles.modalContainer}>
-            <View style={localStyles.modalContent}>
-              <Text style={localStyles.label}>Title of Resource</Text>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.label}>Title of Resource</Text>
               <TextInput
                 value={title}
                 onChangeText={(text) => setTitle(text)}
-                style={[localStyles.input, isSubmitting && localStyles.disabledButton]}
+                style={[styles.input, isSubmitting && styles.disabledButton]}
                 editable={!isSubmitting}
               />
 
-              <Text style={localStyles.label}>Description of Resource</Text>
+              <Text style={styles.label}>Description of Resource</Text>
               <TextInput
                 value={desc}
                 onChangeText={(text) => setDesc(text)}
-                style={[localStyles.input, localStyles.multilineInput, isSubmitting && localStyles.disabledButton]}
+                style={[styles.input, styles.multilineInput, isSubmitting && styles.disabledButton]}
                 multiline={true}
                 numberOfLines={3}
                 editable={!isSubmitting}
               />
 
               <TouchableOpacity
-                style={[localStyles.filePickerButton, isSubmitting && localStyles.disabledButton]}
+                style={[styles.filePickerButton, isSubmitting && styles.disabledButton]}
                 onPress={pickDocument}
                 disabled={isSubmitting}
               >
                 <Ionicons name="cloud-upload-outline" size={24} color="#666" />
-                <Text style={localStyles.filePickerText}>
+                <Text style={styles.filePickerText}>
                   {selectedFile?.assets?.[0]?.name || "Choose a file"}
                 </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[localStyles.saveButton, isSubmitting && localStyles.disabledButton]}
+                style={[styles.saveButton, isSubmitting && styles.disabledButton]}
                 onPress={() => addResource(title, desc)}
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
                   <ActivityIndicator color={COLORS.text.light} />
                 ) : (
-                  <Text style={localStyles.saveButtonText}>Add Resource</Text>
+                  <Text style={styles.saveButtonText}>Add Resource</Text>
                 )}
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[localStyles.cancelButton, isSubmitting && localStyles.disabledButton]}
+                style={[styles.cancelButton, isSubmitting && styles.disabledButton]}
                 onPress={() => {
                   setIsModalVisible(false);
                   setSelectedFile(null);
                 }}
                 disabled={isSubmitting}
               >
-                <Text style={localStyles.cancelButtonText}>Cancel</Text>
+                <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -368,12 +427,36 @@ export default function TeacherForum() {
   );
 }
 
-const localStyles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.tertiary,
   },
   
+  tabContainer: {
+    flexDirection: 'row',
+    padding: 16,
+    gap: 12,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: COLORS.card.secondary,
+    alignItems: 'center',
+  },
+  activeTab: {
+    backgroundColor: COLORS.primary,
+  },
+  tabText: {
+    fontSize: 16,
+    color: COLORS.text.secondary,
+    fontWeight: '500',
+  },
+  activeTabText: {
+    color: COLORS.text.light,
+  },
   searchContainer: {
     flexDirection: 'row',
     marginTop: Platform.OS === 'ios' ? 60 : 0,
@@ -465,17 +548,15 @@ const localStyles = StyleSheet.create({
   },
 
   emptyStateContainer: {
-    alignItems: 'center',
+    flex: 1,
     justifyContent: 'center',
-    padding: 32,
-    marginTop: 32,
+    alignItems: 'center',
+    paddingVertical: 32,
   },
 
   emptyStateText: {
-    marginTop: 16,
-    fontSize: 16,
     color: COLORS.text.secondary,
-    textAlign: 'center',
+    fontSize: 16,
   },
 
   modalContainer: {
